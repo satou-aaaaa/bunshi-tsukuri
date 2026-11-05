@@ -297,6 +297,22 @@ try {
     check("書きかえた記録で分子帳・とことんを開いても、HTML が入らずエラーも出ない", (await p.evaluate(() => !window.__x && !document.querySelector("img[src=x]")) && (await p.locator("#life").count()) === 1));
     await p.context().close();
   }
+  { // ありえない日付の記録は取り込まない・始めた日より前は今日と上級を始めない（2026-11-06 CodeRabbit）
+    const p = await newPage(390, false);
+    await p.evaluate((K) => localStorage.setItem(K, JSON.stringify({ v: 1, tut: true, days: { "2026-02-30": { m: [0, 0, 0] } }, runs: { d: { mode: "d", date: "2026-11-99", list: [0, 1, 2], res: [0, 0, 0], id: "x" } } })), KEY);
+    await p.reload();
+    const r = await p.evaluate(() => { const s = window.__bt.load(); return { d: s.runs.d, days: Object.keys(s.days), home: !!document.querySelector("#go-d") }; });
+    check("ありえない日付（11/99・2/30）の記録は捨てて、ホームが開く", r.d == null && r.days.length === 0 && r.home, JSON.stringify(r));
+    await p.context().close();
+    const q = await browser.newContext({ viewport: { width: 390, height: 820 } }), qp = await q.newPage();
+    await qp.clock.setFixedTime(new Date("2026-11-03T03:00:00Z")); qp.on("pageerror", (e) => errors.push(String(e)));
+    await qp.goto(url); await qp.evaluate((k) => localStorage.setItem(k, JSON.stringify({ v: 1, tut: true })), KEY); await qp.reload();
+    const t = await qp.locator("#go-d").innerText();
+    await qp.evaluate(() => { window.__bt.startRun("d"); window.__bt.startRun("h"); });
+    const runs = await qp.evaluate(() => window.__bt.load().runs);
+    check("始めた日より前の日付では、今日・上級を始めず、遊べる日を出す", /11\/5から遊べます/.test(t) && !runs.d && !runs.h, JSON.stringify({ t, runs }));
+    await q.close();
+  }
   { // 引き継ぎコード（shared-workflows template/qa/transfer-check.mjs）
     const sample = { [KEY]: JSON.stringify({ v: 1, tut: true, days: { "2026-11-09": { m: [0, 1, 0] } }, hdays: {}, pdays: {}, dex: { "エタン": 3, "酢酸": 2 }, runs: {}, kofi: {}, ach: {}, apark: {}, ebest: 7, t: 1 }) };
     await checkTransfer({ browser, url, game: "bunshi-tsukuri", sample, check, open: async (page) => { await page.evaluate(() => { const d = document.getElementById("howto"); if (d.open) d.close(); }); } });

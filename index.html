@@ -340,7 +340,8 @@ const bookOf = (s, m) => (m === "d" ? s.days : m === "h" ? s.hdays : m === "a" ?
 function bank(s, r) { const b = doneOf(r) ? bookOf(s, r.mode) : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
 // 保存に失敗したあとはメモリと保存の両方を読み、記録（日ごとの結果・帳など）は合わせ、途中経過は進んだほう（同じなら新しく保存したほう）を使う
 // 読んだ記録の形と値をそろえる（引き継ぎコードや手で書きかえた記録に、字や範囲外の数が入っていても画面の HTML に入れない。2026-11-05 CodeRabbit）
-const DATE = /^\d{4}-\d\d-\d\d$/, NAMES = new Set(MOLS.map((m) => m.n));
+// 日付は形だけでなく、実在する日か確かめる（2026-11-99 のような記録を取り込まない。2026-11-06 CodeRabbit）
+const DATE = { test: (k) => typeof k === "string" && /^\d{4}-\d\d-\d\d$/.test(k) && !isNaN(Date.parse(k)) && new Date(k + "T00:00:00Z").toISOString().slice(0, 10) === k }, NAMES = new Set(MOLS.map((m) => m.n));
 const int = (v, lo, hi) => { v = Math.floor(Number(v)); return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : lo; };
 const obj = (v) => (v && typeof v === "object" && !Array.isArray(v) ? v : {});
 function tidyRun(r, m) {
@@ -416,7 +417,7 @@ function home() {
     <h1 class="title">分子づくり</h1>
     <p class="lead">原子の手の数を手がかりに、原子をつないで分子を組み立てる。<br>1日3分子。</p>
     ${done ? `<div class="share">今日の結果\n${done.m.map((m) => "★".repeat(starsOf(m))).join("　")}</div>` : ""}
-    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}つ目）` : `今日の3分子を作る <small>#${dayNo(k)}</small>`}</button>
+    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}つ目）` : k < EPOCH ? `${md(EPOCH)}から遊べます` : `今日の3分子を作る <small>#${dayNo(k)}</small>`}</button>
     ${done ? `<button class="main alt" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：手がかりなしで2分子"}</button>` : ""}
     <button class="main alt" id="go-e" style="flex-wrap:wrap;row-gap:0">${re ? `とことんの続きから（${re.res.length + 1}つ目）` : "とことん：何分子つづく？"}${s.ebest ? ` <small style="white-space:nowrap">自己ベスト ${s.ebest}</small>` : ""}</button>
     <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">分子帳 ${n}/${MOLS.length}</button></div>
@@ -435,6 +436,7 @@ function home() {
   if (!s.tut) openHow();
 }
 function startRun(mode, only) {
+  if ((mode === "d" || mode === "h") && todayKey() < EPOCH) { toast(`${md(EPOCH)}から遊べます`); return home(); } // 始めた日より前（端末の日付がずれている）は、今日・上級を始めない（2026-11-06 CodeRabbit）
   const k = mode === "a" ? only : todayKey(); // a: 取りこぼした日をあとから（only はその日付）
   if (mode === "a" && !(load().runs.a && load().runs.a.date === k) && !missed(load()).includes(k)) return calendar(); // 7日より前・遊んだ日・未来の日は始めない
   save((s) => {
