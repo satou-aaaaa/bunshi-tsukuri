@@ -1,0 +1,688 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'">
+<title>分子づくり</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="原子の手の数を手がかりに、原子を結合でつないで分子を組み立てる1日3分子のパズル。化学式と構造がいっしょに覚えられます。時間制限なし。">
+<meta name="theme-color" content="#f6f2e8">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="分子づくり">
+<meta property="og:title" content="分子づくり：原子をつないで分子を組み立てる">
+<meta property="og:description" content="C は4本、O は2本。原子の手の数を手がかりに、今日の3分子を組み立てよう。">
+<meta property="og:url" content="https://satou-aaaaa.github.io/bunshi-tsukuri/">
+<meta property="og:image" content="https://satou-aaaaa.github.io/bunshi-tsukuri/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="分子づくり：原子を線でつないで分子を組み立てるパズル">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@700;900&family=Zen+Kaku+Gothic+New:wght@500;700&display=swap">
+<style>
+/* 理科室のノート。原子の色は分子模型でよく使う色（C 黒・N 青・O 赤・Cl 緑）に寄せ、色だけでなく文字でも分かるようにする */
+:root{
+  --bg:#f6f2e8; --paper:#fffdf8; --ink:#1f2933; --muted:#4f5a64; --accent:#0f6b63; --gold:#8a5a00; --line:#1f293326; --panel:#ffffff; --bad:#b42318;
+  --cC:#2f3640; --cN:#1d4ed8; --cO:#c62828; --cCl:#1b7a3a;
+  --f-disp:"Zen Old Mincho","Hiragino Mincho ProN","Yu Mincho",serif;
+  --f-body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-weight:500;overflow-x:hidden;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:460px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 28px;display:flex;flex-direction:column;gap:14px;min-height:100%;box-sizing:border-box}
+header{display:flex;justify-content:space-between;align-items:center;gap:8px;min-height:44px}
+h1{font-family:var(--f-disp);font-size:22px;margin:0;letter-spacing:.1em}
+h1 small{font-family:var(--f-body);font-size:12px;letter-spacing:0;color:var(--muted);margin-left:8px;font-weight:500}
+.icon{all:unset;cursor:pointer;font-size:18px;min-width:44px;height:44px;display:grid;place-items:center;border-radius:10px;border:1px solid var(--line);box-sizing:border-box;padding:0 8px;background:var(--panel)}
+button.main{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;min-height:52px;border-radius:12px;background:var(--accent);color:#fff;font-weight:700;font-size:17px;padding:0 16px;text-align:center;box-shadow:0 4px 0 #08413c}
+button.main:active{transform:translateY(2px);box-shadow:0 2px 0 #08413c}
+button.main.alt{background:#dfe9e6;box-shadow:0 4px 0 #9db5af;color:#123a36}
+button.main:disabled{background:#c9cfcc;box-shadow:0 4px 0 #a5aba8;color:#3b4247;cursor:default}
+button.sub{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;min-height:46px;border-radius:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-weight:700;font-size:15px;padding:0 10px;text-align:center}
+button.sub:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px}.row>.sub,.row>.main{flex:1 1 0}
+.note{color:var(--muted);font-size:13px;line-height:1.6;margin:0;text-align:center}
+.note a{color:var(--accent);display:inline-flex;align-items:center;min-height:44px}
+.dots{display:flex;gap:6px;flex:1;max-width:140px}
+.dots i{flex:1;height:6px;border-radius:3px;background:var(--line)}
+.dots i.on{background:var(--accent)}.dots i.done{background:#8fb8b2}
+.mname{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.mname b{font-family:var(--f-disp);font-size:28px;letter-spacing:.06em;font-weight:900;line-height:1.15}
+.mname .f{font-size:24px;font-weight:700;color:var(--accent);white-space:nowrap}
+.clue{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:10px;padding:8px 12px;font-size:14px;line-height:1.6;margin:0}
+.board{position:relative;border-radius:14px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line);user-select:none;-webkit-user-select:none;background-image:linear-gradient(var(--line) 1px,transparent 1px);background-size:100% 28px}
+.board svg{display:block;width:100%;height:auto}
+.bond{stroke:var(--ink);stroke-width:9;stroke-linecap:round}
+.halo{stroke:var(--paper);stroke-width:27;stroke-linecap:butt} /* 交わる結合が、つながって見えないように下に紙の色をしく */
+.bond.hl{stroke:var(--gold);animation:blink .5s ease-in-out 3}
+@keyframes blink{50%{opacity:.25}}
+.board.won .bond{stroke:var(--accent)}
+.atom{all:unset;box-sizing:border-box;position:absolute;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:21px;line-height:1;cursor:pointer;border:3px solid #fff;box-shadow:0 2px 0 #0003;white-space:nowrap;letter-spacing:-.02em}
+.atom sub{font-size:13px;vertical-align:-3px}
+.atom.C{background:var(--cC)}.atom.N{background:var(--cN)}.atom.O{background:var(--cO)}.atom.Cl{background:var(--cCl)}
+.atom.sel{box-shadow:0 0 0 4px var(--paper),0 0 0 8px var(--gold);transform:scale(1.08)}
+.atom.over{border:3px dashed #fff;outline:4px solid var(--bad);outline-offset:0}
+.atom.over::after{content:"！";position:absolute;top:-12px;right:-12px;width:24px;height:24px;border-radius:50%;background:var(--bad);color:#fff;font-size:15px;display:grid;place-items:center}
+.board.won .atom{animation:pop .5s ease-out}
+@keyframes pop{40%{transform:scale(1.15)}}
+.meter{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.meter b{font-size:22px;font-family:var(--f-disp);white-space:nowrap}
+.meter span{font-size:14px;line-height:1.5;color:var(--ink);text-align:right}
+.meter.ok{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.say{background:#fff4e5;border:1px solid #e3b26a;border-radius:12px;padding:10px 12px;font-size:14px;line-height:1.6;margin:0}
+.verdict{background:var(--panel);border:2px solid var(--accent);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:8px;text-align:center;animation:up .35s ease-out}
+@keyframes up{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.verdict b{font-family:var(--f-disp);font-size:26px}
+.fact{font-size:15px;line-height:1.6;margin:0;color:var(--ink)}
+.stars{color:var(--gold);letter-spacing:.1em;font-size:22px}
+.stars .off{color:#1f293333}
+.title{font-family:var(--f-disp);font-weight:900;font-size:42px;letter-spacing:.16em;text-align:center;margin:6px 0 0}
+.lead{text-align:center;color:var(--muted);margin:0;font-size:14px;line-height:1.7}
+.hero{width:44%;margin:0 auto;display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stats div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 6px;text-align:center}
+.stats b{display:block;font-size:20px;font-family:var(--f-disp)}
+.stats small{color:var(--muted);font-size:12px}
+.rank{text-align:center;font-size:13px;color:var(--gold);margin:0}
+.share{background:var(--panel);border-radius:12px;padding:12px;white-space:pre-line;font-size:15px;line-height:1.6;text-align:center;border:1px solid var(--line)}
+.shares{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.shares a,.shares button{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font-size:14px;font-weight:700;text-decoration:none;padding:0 6px;box-sizing:border-box;font-family:inherit;cursor:pointer}
+.mols{display:flex;flex-direction:column;gap:8px}
+.mols>div{display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:left}
+.mols b{font-size:16px}.mols .f{color:var(--accent);font-weight:700}
+.mols small{grid-column:1/-1;color:var(--muted);font-size:13px;line-height:1.5}
+.dexh{font-family:var(--f-disp);font-size:17px;margin:6px 0 0}
+.dex{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.dex button{all:unset;box-sizing:border-box;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px;text-align:left;font-size:13px;min-height:64px;cursor:pointer;display:flex;flex-direction:column;gap:2px}
+.dex button b{font-size:15px}.dex button .f{color:var(--accent);font-weight:700}
+.dex button .stars{font-size:14px}
+.dex button.unk{background:#efe9dc;color:var(--muted)}
+.dex button small{color:var(--muted);line-height:1.4}
+dialog{border:none;border-radius:16px;background:var(--paper);color:var(--ink);max-width:400px;width:calc(100% - 32px);padding:20px;box-sizing:border-box}
+dialog::backdrop{background:#000000aa}
+dialog h2{font-family:var(--f-disp);margin:0 0 10px}
+dialog ol{padding-left:1.3em;margin:0 0 12px;line-height:1.8}
+dialog p{margin:0 0 10px;font-size:14px;line-height:1.7;color:var(--muted)}
+dialog a{color:var(--accent);min-height:44px;display:inline-flex;align-items:center}
+.hands{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 12px}
+.hands span{display:inline-flex;align-items:center;gap:4px;font-size:14px}
+.hands i{font-style:normal;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;z-index:9;box-shadow:0 6px 20px #0005;max-width:calc(100% - 48px);text-align:center}
+.hint{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;font-size:14px;text-align:center;margin:0}
+.life{font-size:18px;letter-spacing:2px;white-space:nowrap}.life .off{opacity:.25}
+.big{font-family:var(--f-disp);font-size:34px;text-align:center;margin:8px 0 0}
+.ach-new{background:#fff4e5;color:#5a3d00;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:700;margin:0;text-align:center}
+.achs{display:flex;flex-direction:column;gap:8px}
+.ach{display:grid;grid-template-columns:36px 1fr auto;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.ach .ic{font-size:22px;text-align:center;filter:grayscale(1);opacity:.45}
+.ach.got{border-color:var(--accent)}.ach.got .ic{filter:none;opacity:1}
+.ach b{display:block;font-size:15px}.ach small{color:var(--muted);font-size:12px;line-height:1.5}
+.ach .pg{font-size:12px;color:var(--muted);text-align:right;min-width:44px}
+.ach .pg i{display:block;height:4px;border-radius:2px;background:var(--line);margin-top:4px;overflow:hidden}
+.ach .pg i span{display:block;height:100%;background:var(--accent)}
+.ach.got .pg{color:var(--accent);font-weight:700}
+.calnav{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.calnav b{font-family:var(--f-disp);font-size:20px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.cal .wd{font-size:11px;color:var(--muted)}
+.cal .d{all:unset;box-sizing:border-box;min-height:44px;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:13px;color:var(--muted);position:relative;line-height:1.1}
+.cal .d.on{color:#fff;font-weight:700}
+.cal .d.later{border:1.5px dashed var(--accent);color:var(--ink)}
+.cal .d.can{border:1.5px dotted var(--muted);color:var(--ink);cursor:pointer}
+.cal .d.today{outline:2px solid var(--gold);outline-offset:-2px}
+.cal .d small{font-size:10px}
+.cal .d .h{position:absolute;top:3px;right:4px;width:7px;height:7px;background:var(--gold);transform:rotate(45deg)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;justify-content:center;font-size:12px;color:var(--muted)}
+.misses{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.misses .sub{flex:0 0 auto;min-width:88px}
+footer{margin-top:auto;text-align:center;font-size:12px;color:var(--muted);display:flex;gap:4px 14px;justify-content:center;flex-wrap:wrap}
+footer a{color:var(--muted);min-height:44px;display:inline-flex;align-items:center}
+html.a11y-cvd .atom.N{background:#0b5bd3}html.a11y-cvd .atom.O{background:#b35900}html.a11y-cvd .atom.Cl{background:#5b3b8c}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+/* all:unset のボタン（原子・カレンダーのます目など）でも枠が消えないよう、いちばん最後に強く書く */
+:is(button,a):focus-visible{outline:3px solid #1a5fd0!important;outline-offset:2px!important}
+</style>
+<script src="transfer.js" data-game="bunshi-tsukuri" data-keys="bunshi-v1,a11y-v1"></script>
+<!-- a11y:begin 見やすさの設定 v2（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
+<style id="a11y-css">
+/* だれでも：キーボードで選んだ所に太い枠（WCAG 2.4.7・2.4.13） */
+:is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #1a5fd0!important;outline-offset:2px!important;box-shadow:0 0 0 5px #fff!important}
+/* 読みやすい文字：UD フォント・行間 1.7・字間を少し広げる・斜体にしない（BDA Dyslexia Style Guide） */
+html.a11y-read body{line-height:1.7}
+html.a11y-read body,html.a11y-read body :where(*:not(svg):not(svg *):not([data-a11y-keepfont]):not([data-a11y-keepfont] *)){font-family:"BIZ UDPGothic","BIZ UDGothic","UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK-R","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif!important;font-style:normal!important}
+html.a11y-read :is(p,li,dd,dt,blockquote,[data-a11y-say]){line-height:1.8!important;letter-spacing:.04em!important}
+html.a11y-read em,html.a11y-read i:not([aria-hidden]){font-style:normal!important;font-weight:700}
+/* 動きを減らす：揺れ・点滅・すべる動きを止める（WCAG 2.3.3。端末の「視差効果を減らす」でも自動で入る） */
+html.a11y-calm *,html.a11y-calm *::before,html.a11y-calm *::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
+/* 色の見分けを助ける：ゲームごとの形・模様は各ゲームが html.a11y-cvd の下に書く。ここではリンクに下線 */
+html.a11y-cvd a{text-decoration:underline!important}
+/* ふりがな：ゲームが <ruby class="a11y-rb"> を置いた所だけ。選んだときだけ出す */
+html:not(.a11y-ruby) ruby.a11y-rb>rt{display:none}
+/* 設定の画面（どのゲームでも同じ見た目・同じ濃さ。白地に黒で 15:1） */
+.a11y-dlg{max-width:min(420px,calc(100vw - 32px));width:100%;box-sizing:border-box;border:2px solid #1d2320;border-radius:14px;padding:18px 16px 14px;background:#fffdf8;color:#1d2320;font:500 16px/1.6 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;letter-spacing:0}
+.a11y-dlg::backdrop{background:#0008}
+.a11y-dlg h2{font-size:19px;margin:0 0 4px;font-weight:700;line-height:1.4}
+.a11y-dlg p{margin:4px 0 10px;font-size:14px;color:#3d4440;line-height:1.6}
+.a11y-dlg label{display:flex;gap:12px;align-items:center;min-height:48px;padding:6px 4px;border-top:1px solid #1d232022;cursor:pointer;line-height:1.4}
+.a11y-dlg label small{display:block;font-size:13px;color:#3d4440}
+.a11y-dlg input[type=checkbox]{width:26px;height:26px;flex:none;accent-color:#1a5fd0;margin:0}
+.a11y-dlg .a11y-row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.a11y-dlg button,.a11y-btn,.a11y-saybtn{min-height:44px;min-width:44px;border-radius:10px;border:2px solid #1d2320;background:#fff;color:#1d2320;font:700 15px/1.2 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;padding:0 14px;cursor:pointer;letter-spacing:0}
+.a11y-dlg button.a11y-ok{background:#1d2320;color:#fff}
+.a11y-btn.a11y-float{position:fixed;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000}
+.a11y-saybtn{position:fixed;right:max(8px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000;box-shadow:0 2px 8px #0003}
+.a11y-saybtn[hidden],.a11y-dlg [hidden]{display:none!important}
+.a11y-note{font-size:13px!important}
+</style>
+<script id="a11y-script">
+/* 見やすさの設定（色覚・ディスレクシア・弱視・動きに弱い人のため）。外へは何も送らない。
+   設定は localStorage の a11y-v1 に置く。同じサイト（satou-aaaaa.github.io）のゲームは同じ設定を使う。
+   ゲームの側でできること：
+   - 設定を開くボタンに data-a11y-open を付ける（無ければ左下に「Aa」のボタンを出す）
+   - 読み上げる文に data-a11y-say を付ける（問題文・知らせなど）
+   - 色の見分けを助ける形・模様は html.a11y-cvd の下に CSS で書く。JS では A11y.on('cvd')
+   - 揺れ・すべる動きを JS で動かすときは、A11y.on('calm') なら止める
+   - 設定が変わると document に a11ychange が届く
+   - 設定の印は html の class「a11y-<設定の名前>」（a11y-read など）。部品の class はこれと重ならない名前にする（2026-11-05 a11y-say がボタンとぶつかった） */
+(() => {
+  const KEY = "a11y-v1";
+  const root = document.documentElement;
+  const OPTS = [
+    ["read", "読みやすい文字", "UD フォント・行間と字間を広く"],
+    ["cvd", "色の見分けを助ける", "色に形・模様・記号を足す"],
+    ["calm", "動きを減らす", "揺れ・点滅・すべる動きを止める"],
+    ["say", "読み上げのボタンを出す", "問題や知らせを声で読む（端末の中の声だけ）"],
+    ["ruby", "ふりがなを出す", "むずかしい漢字に読みを付ける"],
+  ];
+  const media = (q) => { try { return matchMedia(q).matches; } catch { return false; } };
+  let S = {};
+  try { S = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch { S = {}; }
+  // 決めていないものは端末の設定に合わせる（視差効果を減らす → 動きを減らす）
+  const on = (k) => (k in S ? !!S[k] : k === "calm" ? media("(prefers-reduced-motion: reduce)") : false);
+  let fontLoaded = false;
+  const loadFont = () => {
+    if (fontLoaded) return; fontLoaded = true;
+    // Google Fonts を許しているページだけ取りに行く（許していなければ端末にある UD フォントを使う）
+    const csp = (document.querySelector('meta[http-equiv="Content-Security-Policy"]') || {}).content || "";
+    if (csp && !/fonts\.googleapis\.com/.test(csp)) return;
+    const l = document.createElement("link");
+    l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap";
+    document.head.appendChild(l);
+  };
+  const apply = () => {
+    for (const [k] of OPTS) root.classList.toggle("a11y-" + k, on(k));
+    if (on("read")) loadFont();
+    if (sayBtn) sayBtn.hidden = !on("say");
+    if (!on("say")) stop();
+  };
+  const set = (k, v) => {
+    S[k] = !!v;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* 保存できなくても今の画面には効かせる */ }
+    apply();
+    document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: k, on: !!v } }));
+  };
+
+  // 読み上げ：端末の中の日本語の声だけを使う（外へ文字を送る声は使わない）
+  const voice = () => { try { return speechSynthesis.getVoices().find((v) => /^ja/i.test(v.lang) && v.localService) || null; } catch { return null; } };
+  const stop = () => { try { speechSynthesis.cancel(); } catch { /* 無い端末 */ } };
+  const visible = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && !el.closest("[hidden],[aria-hidden=true],[inert]"); };
+  const sayText = () => [...document.querySelectorAll("[data-a11y-say]")].filter(visible).map((el) => (el.getAttribute("aria-label") || el.innerText || "").trim()).filter(Boolean).join("。");
+  const say = (text) => {
+    const v = voice();
+    if (!v || !text) return false;
+    stop();
+    const u = new SpeechSynthesisUtterance(text.slice(0, 600));
+    u.voice = v; u.lang = v.lang; u.rate = 0.95;
+    speechSynthesis.speak(u);
+    return true;
+  };
+
+  let dlg = null, sayBtn = null, lastFocus = null;
+  const build = () => {
+    dlg = document.createElement("dialog");
+    dlg.className = "a11y-dlg";
+    dlg.setAttribute("aria-labelledby", "a11y-h");
+    const hasRuby = !!document.querySelector("ruby.a11y-rb");
+    dlg.innerHTML = `<h2 id="a11y-h">見やすさ・読みやすさ</h2><p>ほかのゲームにも同じ設定が使われます。文字は2本の指で広げると大きくなります。</p>` +
+      OPTS.filter(([k]) => k !== "ruby" || hasRuby).map(([k, n, d]) => `<label><input type="checkbox" data-k="${k}"><span>${n}<small>${d}</small></span></label>`).join("") +
+      `<p class="a11y-note" id="a11y-novoice" hidden>この端末には、外へ送らずに読める日本語の声がありません。</p><div class="a11y-row"><button type="button" class="a11y-ok" data-a11y-close>閉じる</button></div>`;
+    document.body.appendChild(dlg);
+    dlg.addEventListener("change", (e) => {
+      const k = e.target.dataset && e.target.dataset.k;
+      if (!k) return;
+      set(k, e.target.checked);
+      if (k === "say") dlg.querySelector("#a11y-novoice").hidden = !(e.target.checked && !voice());
+    });
+    dlg.querySelector("[data-a11y-close]").addEventListener("click", () => dlg.close());
+    dlg.addEventListener("close", () => { if (lastFocus && lastFocus.focus) lastFocus.focus(); });
+    sayBtn = document.createElement("button");
+    sayBtn.type = "button"; sayBtn.className = "a11y-saybtn"; sayBtn.textContent = "🔊 読む"; sayBtn.setAttribute("aria-label", "画面の問題を読み上げる");
+    sayBtn.addEventListener("click", () => {
+      try { if (speechSynthesis.speaking) return stop(); } catch { /* 無い端末 */ }
+      if (!say(sayText())) open();
+    });
+    document.body.appendChild(sayBtn);
+    if (!document.querySelector("[data-a11y-open]")) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "a11y-btn a11y-float"; b.textContent = "Aa"; b.setAttribute("data-a11y-open", ""); b.setAttribute("aria-label", "見やすさの設定");
+      document.body.appendChild(b);
+    }
+    document.addEventListener("click", (e) => { const t = e.target.closest && e.target.closest("[data-a11y-open]"); if (t) { e.preventDefault(); open(); } });
+    apply();
+  };
+  const open = () => {
+    if (!dlg) build();
+    lastFocus = document.activeElement;
+    for (const c of dlg.querySelectorAll("input[data-k]")) c.checked = on(c.dataset.k);
+    dlg.querySelector("#a11y-novoice").hidden = !(on("say") && !voice());
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  };
+  apply();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
+  window.A11y = { on, set, open, say, stop };
+})();
+</script>
+<!-- a11y:end -->
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<dialog id="howto" aria-labelledby="howto-t">
+  <h2 id="howto-t">遊び方</h2>
+  <ol>
+    <li>分子の名前と化学式を見て、原子どうしを結合でつなぎます。</li>
+    <li>2つの原子を順に押すと結合ができます。同じ2つを押すたびに 一重 → 二重 → 三重 → なし と変わります。</li>
+    <li>原子の手の数（結合の数）は決まっています。あまった手には H（水素）が自動でつきます。</li>
+    <li>H の数が化学式とそろったら「たしかめる」。名前の分子と同じ形なら完成です。</li>
+  </ol>
+  <div class="hands" aria-label="原子の手の数"><span><i style="background:var(--cC)">C</i>4本</span><span><i style="background:var(--cN)">N</i>3本</span><span><i style="background:var(--cO)">O</i>2本</span><span><i style="background:var(--cCl)">Cl</i>1本</span><span><i style="background:#5f6b76">H</i>1本</span></div>
+  <p>手の数は高校化学の共有結合のきまり（<a href="https://www.educ.pref.fukuoka.jp/wp-content/uploads/w3educ/2023/11/up_VOXOJIA67R02_%E9%85%8D%E4%BF%A1%E6%95%99%E6%9D%90%EF%BC%88%E5%85%B1%E6%9C%89%E7%B5%90%E5%90%88%EF%BC%89.pdf" target="_blank" rel="noopener">福岡県教育センターの教材</a>）。分子の形とひとことは <a href="https://pubchem.ncbi.nlm.nih.gov/" target="_blank" rel="noopener">PubChem</a> などで確かめています。ベンゼンは二重と一重が交互の形（ケクレ構造）で作ります。時間制限はありません。</p>
+  <p><a id="fb2" target="_blank" rel="noopener">感想を送る</a></p>
+  <button class="main" id="howto-ok" style="width:100%">わかった</button>
+</dialog>
+<script src="data.js"></script>
+<script src="chem.js"></script>
+<script>
+"use strict";
+const MOLS = window.MOLS, X = window.CHEM, $ = (id) => document.getElementById(id), app = $("app");
+const SITE = "https://satou-aaaaa.github.io/bunshi-tsukuri/";
+const FEEDBACK = "https://github.com/satou-aaaaa/bunshi-tsukuri/issues/new?template=feedback.yml";
+const KEY = "bunshi-v1", EPOCH = "2026-11-05";
+const STAGE = { 1: "一重の結合だけ", 2: "二重の結合がある", 3: "三重の結合がある", 4: "大きな分子" };
+
+const jstNow = () => new Date(Date.now() + 9 * 3600e3);
+const todayKey = () => jstNow().toISOString().slice(0, 10);
+const dayNo = (k) => Math.round((Date.parse(k) - Date.parse(EPOCH)) / 864e5) + 1;
+const md = (k) => `${+k.slice(5, 7)}/${+k.slice(8, 10)}`;
+const prevDay = (k) => new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10);
+// 今日の3分子・上級の2分子は、日本時間の日付（始めた日からの日数）で決まる。だれでも同じ
+const pick = (k, hard) => (hard ? X.hard(MOLS, dayNo(k) - 1) : X.daily(MOLS, dayNo(k) - 1));
+
+// とことん：一重 → 二重 → 三重 → 大きな分子の順に全部（段の中の並びは毎回ちがう）。2周目は手がかり・H の表示なし。まちがい・ヒント1回で🎫1枚、🎫が無いときにまちがえると終わり
+const ELIFE = 3;
+function endlessList() { const lap = () => { const out = []; for (const st of [1, 2, 3, 4]) { const pool = MOLS.map((_, i) => i).filter((i) => MOLS[i].st === st); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; } out.push(...pool); } return out; }; return [...lap(), ...lap()]; }
+const blindAt = (run, i) => run.mode === "h" || (run.mode === "e" && i >= MOLS.length); // 上級ととことんの2周目は、手がかりと H の数を出さない
+const fresh = () => ({ v: 1, days: {}, hdays: {}, pdays: {}, dex: {}, runs: {}, tut: false, kofi: {}, ach: {}, apark: {}, ebest: 0 }); // pdays: あとから遊んだ日の結果（連続・今日の記録には数えない）。ach: 結果の画面で知らせ終えた実績。apark: あとから遊ぶ日の途中経過を日付ごとに預ける所
+let MODE = "d"; // 遊んでいるモード。途中経過はモードごとに runs[mode] へ分けて置く（練習で今日の途中を消さない）
+let mem = null; // 保存できない環境では、開いているあいだだけここに置く
+const doneOf = (r) => !!r && r.res.length >= r.list.length, recOf = (r) => ({ m: r.res });
+const bookOf = (s, m) => (m === "d" ? s.days : m === "h" ? s.hdays : m === "a" ? s.pdays : null); // モードごとの日ごとの記録（練習・とことんは無し）
+// 終わった今日・上級の回を日ごとの記録に入れる（結果を見る前に別のタブが次の日を保存しても、終えた日を失わない）
+function bank(s, r) { const b = doneOf(r) ? bookOf(s, r.mode) : null; if (!b || b[r.date]) return false; b[r.date] = recOf(r); return true; }
+// 保存に失敗したあとはメモリと保存の両方を読み、記録（日ごとの結果・帳など）は合わせ、途中経過は進んだほう（同じなら新しく保存したほう）を使う
+function load() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (!a || !b) return Object.assign(fresh(), a || b || {}); a = Object.assign(fresh(), a); b = Object.assign(fresh(), b); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : 0), idOf = (r) => JSON.stringify([r.list || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = bookOf(s, r.mode); if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; if (!bank(s, l) && m === "a" && !doneOf(l) && !s.apark[l.date]) s.apark[l.date] = l; s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; }
+function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
+function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k); while (days[k]) { n++; k = prevDay(k); } return n; }
+const starsOf = (m) => (m === 0 ? 3 : m <= 2 ? 2 : 1);
+const starStr = (s) => `<span class="stars" aria-label="星${s}つ">${"★".repeat(s)}<span class="off">${"★".repeat(3 - s)}</span></span>`;
+const RANKS = [[0, "分子の見習い"], [10, "化学クラブ"], [25, "分子博士"], [MOLS.length, "分子の名人"]];
+const rankOf = (n) => RANKS.filter(([x]) => n >= x).pop()[1];
+// 実績：いまの記録から毎回数える（腕前・集める・続けるをまぜる）。[id, 絵, 名前, 条件, (記録) => [いま, 目標]]
+const recs = (b) => Object.values(b || {}).filter((r) => r && Array.isArray(r.m));
+const clean = (b) => recs(b).filter((r) => r.m.length && r.m.every((m) => m === 0)).length;
+const n3 = (s) => Object.values(s.dex).filter((x) => x >= 3).length;
+const nDays = (s) => new Set([...Object.keys(s.days), ...Object.keys(s.pdays || {})].filter((k) => /^\d{4}-\d\d-\d\d$/.test(k))).size;
+function maxStreak(days) { let best = 0; for (const k of Object.keys(days)) { if (!/^\d{4}-\d\d-\d\d$/.test(k) || days[prevDay(k)]) continue; let n = 0, d = k; while (days[d]) { n++; d = new Date(Date.parse(d) + 864e5).toISOString().slice(0, 10); } best = Math.max(best, n); } return best; }
+// 同じ原子で別の形の分子（異性体）の組
+const ISO = Object.values(MOLS.reduce((g, m) => { (g[m.f] = g[m.f] || []).push(m.n); return g; }, {})).filter((g) => g.length > 1);
+const isoDone = (s) => ISO.filter((g) => g.every((n) => n in s.dex)).length;
+const inDex = (s, f) => MOLS.filter((m) => f(m) && m.n in s.dex).length;
+const ACH = [
+  ["s1", "⭐", "はじめての★3", "分子を1つ★3で作る", (s) => [n3(s), 1]],
+  ["clear", "🧪", "一発でそろえた日", "1日の3分子を、まちがい・ヒントなしで", (s) => [clean(s.days) + clean(s.pdays), 1]],
+  ["h1", "🔬", "手がかりなしデビュー", "上級を最後まで作る", (s) => [recs(s.hdays).length, 1]],
+  ["hc", "🎯", "名前だけで分かる", "上級をまちがい・ヒントなしで", (s) => [clean(s.hdays), 1]],
+  ["iso", "🔀", "異性体を見分ける", `同じ原子で別の形の分子を、組ごと全部作る（${ISO.length}組）`, (s) => [isoDone(s), ISO.length]],
+  ["tri", "🔗", "三重結合の使い手", "三重の結合がある分子を全部作る", (s) => [inDex(s, (m) => m.st === 3), MOLS.filter((m) => m.st === 3).length]],
+  ["ring", "⬡", "輪をつくる", "ベンゼン（6つの C の輪）を作る", (s) => ["ベンゼン" in s.dex ? 1 : 0, 1]],
+  ["s10", "✨", "★3を10分子", "10の分子を★3で作る", (s) => [n3(s), 10]],
+  ["d10", "📒", "分子帳10", "分子帳に10集める", (s) => [Object.keys(s.dex).length, 10]],
+  ["dHalf", "📚", "分子帳の半分", `分子帳に${Math.ceil(MOLS.length / 2)}集める`, (s) => [Object.keys(s.dex).length, Math.ceil(MOLS.length / 2)]],
+  ["dAll", "🏛", "分子帳を全部", "分子帳を全部うめる", (s) => [Object.keys(s.dex).length, MOLS.length]],
+  ["n10", "📅", "10日の実験", "10日、今日の3分子を作る", (s) => [nDays(s), 10]],
+  ["st7", "🗓", "7日つづけて", "今日の3分子を7日つづけて", (s) => [maxStreak(s.days), 7]],
+  ["e20", "🏃", "とことん20", "とことんで20分子つづけて作る", (s) => [s.ebest || 0, 20]],
+];
+const achOf = (s) => ACH.map(([id, ic, name, cond, f]) => { const [n, g] = f(s); return { id, ic, name, cond, n: Math.min(n, g), g, got: n >= g }; });
+// 取りこぼした日：きのうから7日前までで、今日の3分子を遊んでいない日（始めた日 EPOCH より前は出さない）
+function missed(s, k = todayKey()) { const out = []; let d = k; for (let i = 0; i < 7; i++) { d = prevDay(d); if (d < EPOCH) break; if (!s.days[d] && !s.pdays[d]) out.push(d); } return out; }
+function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status"); d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 1800); }
+const buzz = (ms = 10) => { try { if (!(window.A11y && A11y.on && A11y.on("calm"))) navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+const footer = () => `<footer><a href="#" id="f-how">遊び方</a><a href="#" data-a11y-open>見やすさ</a><a href="#" data-hk>引き継ぎ</a><a id="f-fb" href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi で応援</a></footer>`;
+function bindFooter() { const h = $("f-how"); if (h) h.onclick = (e) => { e.preventDefault(); openHow(); }; }
+function openHow() { $("fb2").href = FEEDBACK; const d = $("howto"); if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute("open", ""); }
+$("howto-ok").onclick = () => { const d = $("howto"); d.close ? d.close() : d.removeAttribute("open"); save((s) => { s.tut = true; }); };
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const F = (m) => X.sub(m.f);
+
+function home() {
+  const s = load(), k = todayKey(), done = s.days[k], hdone = s.hdays[k];
+  // 最後の1問を終えて結果を見る前に閉じた日は、開き直したら結果へ進める（記録をつける）
+  for (const m of ["d", "h", "a", "e"]) { const r = s.runs[m]; if (r && r.res.length >= r.list.length) { MODE = m; return finish(); } }
+  const at = (m) => (s.runs[m] && s.runs[m].date === k ? s.runs[m] : null), rd = at("d"), rh = at("h"), n = Object.keys(s.dex).length;
+  const re = s.runs.e && !doneOf(s.runs.e) ? s.runs.e : null;
+  app.innerHTML = `
+    <svg class="hero" viewBox="0 0 200 190" style="overflow:visible" aria-hidden="true"><g stroke="#1f2933" stroke-width="7" stroke-linecap="round"><line x1="100" y1="25" x2="165" y2="62"/><line x1="165" y1="62" x2="165" y2="128"/><line x1="165" y1="128" x2="100" y2="165"/><line x1="100" y1="165" x2="35" y2="128"/><line x1="35" y1="128" x2="35" y2="62"/><line x1="35" y1="62" x2="100" y2="25"/><line x1="113" y1="45" x2="150" y2="67"/><line x1="150" y1="122" x2="113" y2="143"/><line x1="52" y1="120" x2="52" y2="70"/></g><g font-family="sans-serif" font-weight="700" font-size="22" text-anchor="middle" fill="#fff">${[[100, 25], [165, 62], [165, 128], [100, 165], [35, 128], [35, 62]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="20" fill="#2f3640"/><text x="${x}" y="${y + 8}">C</text>`).join("")}</g></svg>
+    <h1 class="title">分子づくり</h1>
+    <p class="lead">原子の手の数を手がかりに、原子をつないで分子を組み立てる。<br>1日3分子。</p>
+    ${done ? `<div class="share">今日の結果\n${done.m.map((m) => "★".repeat(starsOf(m))).join("　")}</div>` : ""}
+    <button class="main" id="go-d">${done ? "今日の結果を見る" : rd ? `続きから（${rd.res.length + 1}つ目）` : `今日の3分子を作る <small>#${dayNo(k)}</small>`}</button>
+    ${done ? `<button class="main alt" id="go-h">${hdone ? "上級の結果を見る" : rh ? "上級の続きから" : "上級：手がかりなしで2分子"}</button>` : ""}
+    <button class="main alt" id="go-e" style="flex-wrap:wrap;row-gap:0">${re ? `とことんの続きから（${re.res.length + 1}つ目）` : "とことん：何分子つづく？"}${s.ebest ? ` <small style="white-space:nowrap">自己ベスト ${s.ebest}</small>` : ""}</button>
+    <div class="row"><button class="sub" id="go-p">練習（何度でも）</button><button class="sub" id="go-dex">分子帳 ${n}/${MOLS.length}</button></div>
+    <div class="row"><button class="sub" id="go-cal">カレンダー${missed(s, k).length ? ` <small style="color:var(--gold)">↺${missed(s, k).length}</small>` : ""}</button><button class="sub" id="go-ach">実績 ${achOf(s).filter((a) => a.got).length}/${ACH.length}</button></div>
+    <div class="stats"><div><b>${streak(s.days)}</b><small>連続の日</small></div><div><b>${Object.keys(s.days).length}</b><small>作った日</small></div><div><b>${n3(s)}</b><small>★3の分子</small></div></div>
+    <p class="rank">${rankOf(n)}</p>
+    ${footer()}`;
+  $("go-d").onclick = () => (k !== todayKey() ? home() : done ? result("d", k) : startRun("d")); // 画面を開いたまま0時を過ぎたら、今日の状態に描き直す
+  if ($("go-h")) $("go-h").onclick = () => (hdone ? result("h", k) : k === todayKey() ? startRun("h") : home());
+  $("go-p").onclick = () => startRun("p");
+  $("go-e").onclick = () => startRun("e");
+  $("go-dex").onclick = () => dex();
+  $("go-cal").onclick = () => calendar();
+  $("go-ach").onclick = () => achView();
+  bindFooter();
+  if (!s.tut) openHow();
+}
+function startRun(mode, only) {
+  const k = mode === "a" ? only : todayKey(); // a: 取りこぼした日をあとから（only はその日付）
+  if (mode === "a" && !(load().runs.a && load().runs.a.date === k) && !missed(load()).includes(k)) return calendar(); // 7日より前・遊んだ日・未来の日は始めない
+  save((s) => {
+    const r = s.runs[mode];
+    if (mode === "e") { if (r && !doneOf(r)) return; s.runs.e = { mode, date: k, list: endlessList(), res: [], life: ELIFE, id: "e" + Date.now().toString(36) + "-" + performance.now().toFixed(3) }; return; } // とことん：途中なら続きから
+    if (r && r.date === k && mode !== "p") return;
+    if (mode === "a" && (s.days[k] || s.pdays[k])) return;
+    if (mode === "a") { // 別の日の途中経過は日付ごとに預け、預けてあった日なら続きから
+      if (r && !doneOf(r)) s.apark[r.date] = r;
+      const old = new Date(Date.parse(todayKey()) - 7 * 864e5).toISOString().slice(0, 10); for (const d in s.apark) if (s.apark[d] && d < old) s.apark[d] = null;
+      const p = s.apark[k]; if (p && p.date === k && !doneOf(p)) { s.runs.a = p; s.apark[k] = null; return; }
+    }
+    if ((mode === "d" && s.days[k]) || (mode === "h" && s.hdays[k])) return; // 別のタブで今日の分を終えていたら、もう一度は始めない
+    let list;
+    if (mode === "d" || mode === "a") list = pick(k, false); else if (mode === "h") list = pick(k, true);
+    else if (only != null) list = [only];
+    else { // 練習：まだ作っていない分子を先に、3つ
+      const sh = (a) => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+      const all = MOLS.map((_, i) => i); list = [...sh(all.filter((i) => !(MOLS[i].n in s.dex))), ...sh(all.filter((i) => MOLS[i].n in s.dex))].slice(0, 3);
+    }
+    s.runs[mode] = { mode, date: k, list, res: [], ...(mode === "p" ? { id: Date.now().toString(36) + "-" + performance.now().toFixed(3) } : {}) }; // 練習は始めるたびに見分ける
+  });
+  MODE = mode;
+  if (mode === "a" && !(load().runs.a && load().runs.a.date === k)) return calendar();
+  play();
+}
+
+let C = null, L = null, bonds = new Map(), sel = null, miss = 0, hints = 0, finished = false, at = null, blind = false, lastHint = null; // at: この画面が何番目のどの分子か（古いタブの書き込みを止める）
+const graph = () => ({ a: L.a, b: [...bonds].map(([k, o]) => { const [i, j] = k.split("-").map(Number); return [i, j, o]; }) });
+const target = () => ({ a: C.a, b: C.b });
+function play() {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  const i = run.res.length;
+  if (i >= run.list.length) return finish();
+  C = MOLS[run.list[i]]; L = X.layout(C); at = { i, c: run.list[i], date: run.date, id: run.id }; bonds = new Map(); sel = null; miss = 0; hints = 0; finished = false; lastHint = null;
+  blind = blindAt(run, i);
+  const label = run.mode === "d" ? "今日の3分子" : run.mode === "h" ? "上級" : run.mode === "a" ? `あとから ${md(run.date)}` : run.mode === "e" ? `とことん${blind ? "・手がかりなし" : ""}` : "練習";
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="もどる">←</button>
+      ${run.mode === "e" ? `<span class="life" id="life" aria-label="🎫 のこり ${run.life}">${lifeStr(run.life)}</span><span style="font-size:13px;color:var(--muted)">${label} ${i + 1}つ目${s.ebest ? `（ベスト ${s.ebest}）` : ""}</span></header>` : `${run.list.length > 1 ? `<div class="dots">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>` : ""}
+      <span style="font-size:13px;color:var(--muted)">${label} ${i + 1}/${run.list.length}</span></header>`}
+    <div class="mname" data-a11y-say><b id="mn">${esc(C.n)}</b><span class="f" aria-label="化学式 ${C.f}">${F(C)}</span></div>
+    ${blind ? `<p class="clue">手がかりなし：名前と化学式から作ります</p>` : `<p class="clue" data-a11y-say>手がかり：${esc(C.c)}</p>`}
+    <div class="board" id="board"><svg viewBox="0 0 1000 ${L.H}" id="svg" aria-hidden="true"><g id="bonds"></g></svg><div id="atoms"></div></div>
+    <div class="meter" id="meter"><b id="hnum"></b><span id="msg" role="status" aria-live="polite"></span></div>
+    <div class="row">${run.mode === "h" ? "" : `<button class="sub" id="hint">ヒント${run.mode === "e" ? "（🎫1）" : ""}</button>`}<button class="sub" id="reset">やり直す</button></div>
+    <button class="main" id="check">たしかめる</button>
+    <div id="after" aria-live="polite"></div>
+    ${run.mode === "e" ? `<p class="note">まちがい・ヒント1回で🎫を1枚使います。🎫が無いときにまちがえると終わりです。</p><button class="sub" id="quit" style="width:100%">ここで降りる（${i}分子で終える）</button>` : ""}
+    ${!s.tut || (Object.keys(s.dex).length === 0 && i === 0) ? `<p class="hint">2つの原子を順に押すと結合。同じ2つをもう一度押すと二重・三重になります。</p>` : ""}`;
+  $("back").onclick = home;
+  if ($("hint")) $("hint").onclick = hint;
+  if ($("quit")) $("quit").onclick = () => finish();
+  $("reset").onclick = () => { if (finished) return; bonds = new Map(); sel = null; lastHint = null; $("after").innerHTML = ""; paint(); };
+  $("check").onclick = submit;
+  $("atoms").innerHTML = L.a.map((e, j) => `<button class="atom ${e}" data-j="${j}" style="left:${L.pos[j][0] / 10}%;top:${(L.pos[j][1] / L.H) * 100}%"></button>`).join("");
+  document.querySelectorAll(".atom").forEach((b) => (b.onclick = () => tap(+b.dataset.j)));
+  paint();
+  window.scrollTo(0, 0);
+}
+const lifeStr = (n) => "🎫".repeat(Math.max(0, n)) + `<span class="off">${"🎫".repeat(Math.max(0, ELIFE - n))}</span>`;
+const lifeOf = () => { const r = load().runs.e; return r ? r.life || 0 : 0; };
+const sameAt = (r) => r && at && r.date === at.date && r.id === at.id && r.res.length === at.i && r.list[at.i] === at.c; // 保存した進み具合が、この画面と同じ分子か
+function useTicket() {
+  let got = false; save((s) => { const r = s.runs.e; if (!sameAt(r)) return; if ((r.life || 0) > 0) { r.life--; got = true; } else got = "out"; });
+  const l = $("life"), n = lifeOf(); if (l) { l.innerHTML = lifeStr(n); l.setAttribute("aria-label", "🎫 のこり " + n); }
+  return got;
+}
+const ORD = ["", "一重", "二重", "三重"];
+function tap(j) {
+  if (finished) return;
+  if (sel == null) { sel = j; return paint(); }
+  if (sel === j) { sel = null; return paint(); }
+  const k = X.key(sel, j), o = ((bonds.get(k) || 0) + 1) % 4;
+  if (o) bonds.set(k, o); else bonds.delete(k);
+  sel = null; lastHint = null; buzz(); $("after").innerHTML = ""; paint();
+}
+// 原子の字と、あまった手についた H の数（Cl に H がつくときは塩化水素と同じ HCl の書き方）
+function hText(e, h) { if (blind || h <= 0) return e; const hs = "H" + (h > 1 ? `<sub>${h}</sub>` : ""); return e === "Cl" ? hs + e : e + hs; }
+function paint() {
+  const g = graph(), c = X.check(g), ok = X.ready(g, C.h);
+  $("bonds").innerHTML = g.b.map(([i, j, o]) => {
+    const [x1, y1] = L.pos[i], [x2, y2] = L.pos[j], dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+    const offs = o === 1 ? [0] : o === 2 ? [-12, 12] : [-18, 0, 18], hl = lastHint === X.key(i, j) ? " hl" : "";
+    return `<line class="halo" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>` + offs.map((d) => `<line class="bond${hl}" x1="${x1 + nx * d}" y1="${y1 + ny * d}" x2="${x2 + nx * d}" y2="${y2 + ny * d}"/>`).join("");
+  }).join("");
+  document.querySelectorAll(".atom").forEach((b) => {
+    const j = +b.dataset.j, e = L.a[j], h = c.hs[j], over = h < 0, nb = g.b.filter(([x, y]) => x === j || y === j).map(([x, y, o]) => `${ORD[o]}で${L.a[x === j ? y : x]}`);
+    b.innerHTML = hText(e, h);
+    b.classList.toggle("sel", sel === j); b.classList.toggle("over", over);
+    b.setAttribute("aria-pressed", sel === j ? "true" : "false");
+    b.setAttribute("aria-label", `${e}（手${X.HANDS[e]}本）${nb.length ? "：" + nb.join("・") : "：つながりなし"}${over ? "・手が多すぎる" : blind ? "" : h ? `・H${h}つ` : ""}${sel === j ? "・選んだ" : ""}`);
+  });
+  $("hnum").textContent = `H ${c.h} / ${C.h}`;
+  let msg;
+  if (finished) msg = "完成";
+  else if (sel != null) msg = `${L.a[sel]} を選んだ：つなぐ相手を押す`;
+  else if (c.over.length) msg = "！の原子は手が多すぎる：結合を減らす";
+  else if (!g.b.length) msg = "2つの原子を順に押してつなぐ";
+  else if (!c.connected) msg = "ばらばらの原子がある：全部つなげる";
+  else if (c.h > C.h) msg = `H が${c.h - C.h}つ多い：二重・三重の結合${C.a.length >= 6 ? "や輪" : ""}で手を使う`;
+  else if (c.h < C.h) msg = `H が${C.h - c.h}つ足りない：結合を減らす`;
+  else msg = "手の数がそろった：たしかめる";
+  $("msg").textContent = msg;
+  $("meter").classList.toggle("ok", ok);
+  $("check").disabled = !ok || finished;
+  $("reset").disabled = !bonds.size || finished;
+  if ($("hint")) $("hint").disabled = finished || (MODE === "e" && lifeOf() <= 0);
+}
+function hint() {
+  if (finished || MODE === "h") return;
+  if (MODE === "e") { const t = useTicket(); if (t !== true) return paint(); }
+  const mv = X.hintMove(graph(), target());
+  if (!mv) return;
+  const [i, j, o] = mv, k = X.key(i, j);
+  if (o) bonds.set(k, o); else bonds.delete(k);
+  hints++; sel = null; lastHint = k;
+  $("after").innerHTML = `<p class="say" role="status">ヒント：${L.a[i]} と ${L.a[j]} を${o ? ORD[o] + "の結合に" : "つながないように"}しました。</p>`;
+  paint();
+}
+function submit() {
+  if (finished || !X.ready(graph(), C.h)) return;
+  if (!sameAt(load().runs[MODE])) { toast("別の画面で先に進んでいます"); return play(); }
+  const g = graph();
+  if (X.same(g, target())) return complete();
+  if (MODE === "e") { const t = useTicket(); if (t === false) { toast("別の画面で先に進んでいます"); return play(); } if (t === "out") { finished = true; buzz(80); return finish("out"); } }
+  miss++; buzz(40);
+  const other = MOLS.find((m) => m !== C && X.same(g, { a: m.a, b: m.b }));
+  $("after").innerHTML = `<p class="say" role="status">✕ ${other ? `それは「${esc(other.n)}」。同じ原子で別の形の分子です（${esc(other.t)}）。` : "手の数は合っていますが、別の形です。"}${blind ? "" : `手がかり：${esc(C.c)}`}</p>`;
+}
+function complete() {
+  finished = true; sel = null;
+  const m = miss + hints, st = starsOf(m);
+  let ok = false;
+  const s = save((s) => { const r = s.runs[MODE]; if (!sameAt(r)) return; r.res.push(m); s.dex[C.n] = Math.max(s.dex[C.n] || 0, st); ok = true; });
+  if (!ok) { finished = false; toast("別の画面で先に進んでいます"); return play(); } // 確かめたあと保存の読み直しまでに別のタブが進めていたら、できた画面を出さない
+  paint();
+  $("board").classList.add("won"); buzz(30);
+  const r = s.runs[MODE], last = r && r.res.length >= r.list.length;
+  $("after").innerHTML = `<div class="verdict" role="status"><b>✓ ${esc(C.n)}</b><span class="f" style="font-size:20px;color:var(--accent);font-weight:700">${F(C)}</span>${starStr(st)}<p class="fact">${esc(C.t)}</p><p class="note">${miss ? `まちがい${miss}回` : "まちがいなし"}${hints ? `・ヒント${hints}回` : ""}</p><button class="main" id="next">${last ? "結果を見る" : "次の分子へ"}</button></div>`;
+  $("next").onclick = play;
+  if ($("quit")) $("quit").textContent = `ここで降りる（${r ? r.res.length : at.i}分子で終える）`;
+  setTimeout(() => { if (finished && $("next")) $("next").scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 50);
+}
+function finish(why) {
+  const s = load(), run = s.runs[MODE];
+  if (!run) return home();
+  if (run.mode === "e") return endFinish(run, why);
+  let first = false;
+  save((s2) => {
+    first = bank(s2, run);
+    const c = s2.runs[MODE]; if (c && c.date === run.date && c.id === run.id && JSON.stringify(c.list) === JSON.stringify(run.list)) s2.runs[MODE] = null; // 別のタブで同じモードの新しい回が始まっていたら、それは消さない
+  });
+  if (run.mode === "p") return result("p", run.date, false, run);
+  result(run.mode, run.date, first);
+}
+const molList = (list, res) => `<div class="mols">${list.map((ci, j) => `<div><b>${esc(MOLS[ci].n)} <span class="f">${F(MOLS[ci])}</span></b>${starStr(starsOf(res[j]))}<small>${esc(MOLS[ci].t)}</small></div>`).join("")}</div>`;
+// とことんの終わり：作った分子の数を自己ベストと比べる（今日の記録・連続・シェア・Ko-fi には数えない）
+function endFinish(run, why) {
+  const n = run.res.length; let prev = 0;
+  save((s2) => { prev = s2.ebest || 0; s2.ebest = Math.max(prev, n); const c = s2.runs.e; if (c && c.id === run.id) s2.runs.e = null; });
+  const s = load(), best = n > prev && n > 0, all = n >= run.list.length;
+  const fresh1 = achOf(s).filter((a) => a.got && !s.ach[a.id]);
+  if (fresh1.length) save((s2) => { for (const a of fresh1) s2.ach[a.id] = 1; });
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>分子づくり<small>とことん</small></h1><span></span></header>
+    ${why === "out" ? `<p class="note" id="eout">🎫が無いときにまちがえたので、ここまで</p>` : all ? `<p class="note" id="eout">全部の分子を手がかりなしまで作りました</p>` : ""}
+    <p class="big" id="eres">${n}分子 作った</p>
+    <p class="note" id="ebest">${best ? "🎉 自己ベスト更新！" : `自己ベスト ${s.ebest}${s.ebest >= n ? `（あと${s.ebest - n + 1}で更新）` : ""}`}</p>
+    ${fresh1.length ? `<p class="ach-new">🏅 実績：${fresh1.length > 2 ? `${fresh1[0].name} ほか${fresh1.length - 1}つ` : fresh1.map((a) => a.name).join("・")}</p>` : ""}
+    ${n ? molList(run.list.slice(0, n), run.res) : ""}
+    <button class="main" id="go-e">もう一度とことん</button>
+    <div class="row"><button class="sub" id="go-p">練習する</button><button class="sub" id="go-dex">分子帳を見る</button></div>
+    <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener">感想を送る</a></p>`;
+  $("back").onclick = home; $("go-e").onclick = () => startRun("e"); $("go-p").onclick = () => startRun("p"); $("go-dex").onclick = () => dex();
+  window.scrollTo(0, 0);
+}
+function untilNext() { const n = jstNow(), ms = 864e5 - (n.getTime() % 864e5); return `${Math.floor(ms / 36e5)}時間${Math.floor((ms % 36e5) / 6e4)}分`; }
+const shareText = (mode, k, ms) => `分子づくり${mode === "h" ? " 上級" : ""} #${dayNo(k)} ${md(k)}\n${ms.map((m) => "★".repeat(starsOf(m)) + "☆".repeat(3 - starsOf(m))).join(" ")}`;
+function result(mode, k, first, prun) {
+  const s = load();
+  const list = mode === "p" ? prun.list : pick(k, mode === "h"), rec = mode === "p" ? { m: prun.res } : bookOf(s, mode)[k];
+  if (!rec) return home();
+  const text = shareText(mode, k, rec.m), perfect = rec.m.every((m) => m === 0), showKofi = first && (mode === "d" || mode === "h") && perfect && !s.kofi[k + mode];
+  if (showKofi) save((s2) => { s2.kofi[k + mode] = 1; });
+  const fresh1 = achOf(s).filter((a) => a.got && !s.ach[a.id]); // 新しく取れた実績は、結果の画面で1度だけ知らせる
+  if (fresh1.length) save((s2) => { for (const a of fresh1) s2.ach[a.id] = 1; });
+  const share = mode === "d" || mode === "h"; // 練習・あとからはシェアしない
+  app.innerHTML = `
+    <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>分子づくり<small>${mode === "d" ? `今日の3分子 #${dayNo(k)}` : mode === "h" ? "上級：手がかりなし" : mode === "a" ? `${md(k)}・あとから` : "練習"}</small></h1><span></span></header>
+    ${molList(list, rec.m)}
+    ${fresh1.length ? `<p class="ach-new">🏅 実績：${fresh1.length > 2 ? `${fresh1[0].name} ほか${fresh1.length - 1}つ` : fresh1.map((a) => a.name).join("・")}</p>` : ""}
+    ${share ? `<div class="share">${text}</div>
+    <button class="main" id="share">結果をシェア</button>
+    <div class="shares"><a id="toX" target="_blank" rel="noopener">Xで投稿</a><a id="toLine" target="_blank" rel="noopener">LINEで送る</a><button id="copy">コピー</button></div>
+    <p class="note">次の分子まで あと <b>${untilNext()}</b></p>` : ""}
+    ${mode !== "p" ? `<button class="main" id="go-e">続けて遊ぶ：とことん${s.ebest ? `（ベスト ${s.ebest}）` : ""}</button>` : ""}
+    ${mode === "d" && k === todayKey() && !s.hdays[k] ? `<button class="main alt" id="go-h">上級：手がかりなしで2分子</button>` : ""}
+    ${mode === "a" ? `<p class="note">あとから遊んだ日は、カレンダーに点線の印で残ります（連続の日には入りません）。</p><button class="main alt" id="go-cal">カレンダーへ</button>` : ""}
+    <div class="row"><button class="sub" id="go-p">${mode === "p" ? "もう一度練習" : "練習する"}</button><button class="sub" id="go-dex">分子帳を見る</button></div>
+    ${showKofi ? `<p class="note kofi">楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しい分子とゲームづくりの励みになります（任意・遊ぶのはずっと無料）。</p>` : ""}
+    <p class="note"><a href="${FEEDBACK}" target="_blank" rel="noopener" id="fb">感想を送る</a></p>`;
+  $("back").onclick = home;
+  $("go-p").onclick = () => startRun("p");
+  if ($("go-e")) $("go-e").onclick = () => startRun("e");
+  $("go-dex").onclick = () => dex();
+  if ($("go-h")) $("go-h").onclick = () => (k === todayKey() ? startRun("h") : home());
+  if ($("go-cal")) $("go-cal").onclick = () => calendar();
+  if (share) {
+    const withUrl = text + "\n" + SITE;
+    $("toX").href = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(withUrl);
+    $("toLine").href = "https://line.me/R/share?text=" + encodeURIComponent(withUrl);
+    const copy = (t) => { (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("コピーしました"), () => toast("コピーできませんでした")); };
+    $("copy").onclick = () => copy(withUrl);
+    $("share").onclick = () => { if (navigator.share) navigator.share({ text: withUrl }).catch(() => {}); else copy(withUrl); };
+  }
+  window.scrollTo(0, 0);
+}
+function dex() {
+  const s = load();
+  app.innerHTML = `<header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>分子帳<small>${Object.keys(s.dex).length}/${MOLS.length}</small></h1><span></span></header>
+    <p class="note">作った分子が集まります。押すとその分子だけ練習できます（まだの分子も）。</p>
+    ${[1, 2, 3, 4].map((st) => `<h2 class="dexh">${st}. ${STAGE[st]}</h2><div class="dex">${MOLS.map((m, i) => (m.st !== st ? "" : m.n in s.dex ? `<button data-i="${i}" aria-label="${esc(m.n)} ${m.f} 星${s.dex[m.n]}つ"><b>${esc(m.n)}</b><span class="f">${F(m)}</span>${starStr(s.dex[m.n])}<small>${esc(m.t)}</small></button>` : `<button class="unk" data-i="${i}" aria-label="まだの分子 ${m.f}"><b>？</b><span class="f">${F(m)}</span><small>まだ</small></button>`)).join("")}</div>`).join("")}
+    ${footer()}`;
+  $("back").onclick = home;
+  document.querySelectorAll(".dex button").forEach((b) => (b.onclick = () => startRun("p", +b.dataset.i)));
+  bindFooter();
+  window.scrollTo(0, 0);
+}
+function achView() {
+  const s = load(), list = achOf(s);
+  app.innerHTML = `<header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>実績<small>${list.filter((a) => a.got).length}/${ACH.length}</small></h1><span></span></header>
+    <div class="achs">${list.map((a) => `<div class="ach${a.got ? " got" : ""}"><span class="ic" aria-hidden="true">${a.ic}</span><div><b>${a.name}</b><small>${a.cond}</small></div><div class="pg">${a.got ? "✓ 達成" : `${a.n}/${a.g}<i><span style="width:${(a.n / a.g * 100).toFixed(0)}%"></span></i>`}</div></div>`).join("")}</div>${footer()}`;
+  $("back").onclick = home;
+  bindFooter();
+  window.scrollTo(0, 0);
+}
+// 遊んだ日のカレンダー：今日の3分子の★の合計で色の濃さ・上級は小さな◆・あとから遊んだ日は点線・遊べる取りこぼした日は ↺
+function calendar(ym) {
+  const s = load(), k = todayKey(), first = EPOCH.slice(0, 7), last = k.slice(0, 7);
+  ym = ym && ym >= first && ym <= last ? ym : last;
+  const [y, m] = ym.split("-").map(Number), d0 = new Date(Date.UTC(y, m - 1, 1)), nd = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  const miss = missed(s, k), st = streak(s.days), sum = (r) => r.m.reduce((t, x) => t + starsOf(x), 0);
+  const prevYm = new Date(Date.UTC(y, m - 2, 1)).toISOString().slice(0, 7), nextYm = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 7);
+  let cells = "";
+  for (let i = 0; i < d0.getUTCDay(); i++) cells += "<span></span>";
+  for (let d = 1; d <= nd; d++) {
+    const key = `${ym}-${String(d).padStart(2, "0")}`, r = s.days[key], a = s.pdays[key], h = s.hdays[key] ? `<i class="h" aria-hidden="true"></i>` : "", td = key === k ? " today" : "";
+    if (r && Array.isArray(r.m)) { const n = sum(r); const f = n / (r.m.length * 3); cells += `<span class="d on${td}" data-k="${key}" style="background:rgba(15,107,99,${(0.6 + 0.4 * f).toFixed(2)})" aria-label="${m}月${d}日 ★${n}${h ? "・上級も" : ""}">${d}<small>★${n}</small>${h}</span>`; }
+    else if (a && Array.isArray(a.m)) cells += `<span class="d later${td}" data-k="${key}" aria-label="${m}月${d}日 あとから ★${sum(a)}">${d}<small>★${sum(a)}</small>${h}</span>`;
+    else if (miss.includes(key)) cells += `<button class="d can" data-k="${key}" aria-label="${m}月${d}日をあとから遊ぶ">${d}<small>↺</small></button>`;
+    else cells += `<span class="d${td}">${d}${h}</span>`;
+  }
+  const ra = (d) => (s.runs.a && !doneOf(s.runs.a) && s.runs.a.date === d) || !!(s.apark[d] && !doneOf(s.apark[d]));
+  app.innerHTML = `<header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>カレンダー</h1><span></span></header>
+    <div class="calnav"><button class="icon" id="cal-prev" aria-label="前の月"${ym <= first ? " disabled style=\"opacity:.3\"" : ""}>‹</button><b>${y}年${m}月</b><button class="icon" id="cal-next" aria-label="次の月"${ym >= last ? " disabled style=\"opacity:.3\"" : ""}>›</button></div>
+    ${st >= 1 ? `<p class="note" id="cal-st">${st}日つづけて作っています</p>` : ""}
+    <div class="cal">${"日月火水木金土".split("").map((w) => `<span class="wd">${w}</span>`).join("")}${cells}</div>
+    <div class="legend"><span>■ 今日の3分子（★の数を表示）</span><span>⬚ あとから</span><span>◆ 上級</span></div>
+    ${miss.length ? `<p class="note">↺ 取りこぼした日を、あとから遊べます（連続の日には入りません）</p><div class="misses">${miss.map((d) => `<button class="sub" data-k="${d}">${md(d)}${ra(d) ? " 続き" : ""}</button>`).join("")}</div>` : ""}
+    ${footer()}`;
+  $("back").onclick = home;
+  if (ym > first) $("cal-prev").onclick = () => calendar(prevYm);
+  if (ym < last) $("cal-next").onclick = () => calendar(nextYm);
+  document.querySelectorAll(".cal button.d, .misses button").forEach((b) => (b.onclick = () => startRun("a", b.dataset.k)));
+  bindFooter();
+  window.scrollTo(0, 0);
+}
+
+window.__bt = { MOLS, X, ACH, ISO, achOf, missed, maxStreak, streak, calendar, achView, startRun, pick, todayKey, load, endlessList, tap: (j) => tap(j), submit: () => submit(), hint: () => hint(), state: () => ({ C, L, bonds: [...bonds], sel, miss, hints, finished, blind }), play: (m) => { if (m) MODE = m; play(); }, mode: () => MODE };
+home();
+if ("serviceWorker" in navigator && location.protocol === "https:" && /github\.io$/.test(location.hostname)) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
