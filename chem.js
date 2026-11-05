@@ -78,15 +78,26 @@
   function cyc(pool, salt, n) { const L = pool.length, c = Math.floor(n / L), order = shuffle(pool, rng(seedOf(salt + ":" + c))); return order[((n % L) + L) % L]; }
   // 今日の3分子：一重だけ・二重/三重・大きな分子から1つずつ（n は始めた日からの日数）
   function daily(M, n) { const P = pools(M); return [cyc(P.a, "a", n), cyc(P.b, "b", n), cyc(P.c, "c", n)]; }
-  // 上級の2分子：二重/三重と大きな分子をまぜた並びを1日3つずつ使い、今日の3分子と同じものは飛ばす
-  function hard(M, n) {
-    const P = pools(M), pool = P.b.concat(P.c), d = daily(M, n), out = [];
-    for (let k = 0; out.length < 2 && k < pool.length; k++) { const x = cyc(pool, "h", n * 3 + k); if (!d.includes(x) && !out.includes(x)) out.push(x); }
-    return out;
+  // 上級の2分子：二重/三重と大きな分子をまぜた並びを、始めた日から順に1日2つずつ使う。今日の3分子と同じものはその日は飛ばして後に回し、
+  // 1周（並びを全部使う）するまで同じ分子は出さない。残りが足りなくなったら、残りを先にして次の周の並びをつなぐ（日ごとの番号から直接は決めない。2026-11-05 CodeRabbit）
+  const HCACHE = new WeakMap();
+  function hardDay(M, n) { // [[分子, 何周目], [分子, 何周目]]
+    let memo = HCACHE.get(M);
+    if (!memo) { memo = { days: [], queue: [], cyc: 0 }; HCACHE.set(M, memo); }
+    const P = pools(M), pool = P.b.concat(P.c);
+    while (memo.days.length <= n) {
+      const today = daily(M, memo.days.length), out = [], free = () => memo.queue.filter(([x]) => !today.includes(x));
+      while (free().length < 2) { const c = memo.cyc++; memo.queue = memo.queue.concat(shuffle(pool, rng(seedOf("h:" + c))).map((x) => [x, c])); }
+      for (const q of memo.queue) if (out.length < 2 && !today.includes(q[0]) && !out.some((o) => o[0] === q[0])) out.push(q);
+      memo.queue = memo.queue.filter((q) => !out.includes(q));
+      memo.days.push(out);
+    }
+    return n < 0 ? [] : memo.days[n].map((q) => q.slice());
   }
+  const hard = (M, n) => hardDay(M, n).map((q) => q[0]);
   const SUB = "₀₁₂₃₄₅₆₇₈₉";
   const sub = (f) => f.replace(/\d+/g, (d) => [...d].map((c) => SUB[+c]).join(""));
 
-  const B = { HANDS, rng, seedOf, shuffle, key, mat, check, ready, same, bestMap, hintMove, layout, pools, cyc, daily, hard, sub };
+  const B = { HANDS, rng, seedOf, shuffle, key, mat, check, ready, same, bestMap, hintMove, layout, pools, cyc, daily, hard, hardDay, sub };
   if (typeof module !== "undefined") module.exports = B; else root.CHEM = B;
 })(this);

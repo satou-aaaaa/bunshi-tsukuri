@@ -27,7 +27,7 @@ node qa/run.mjs   # 分子のデータ（手の数・化学式・同じ形の分
 - 感想は「感想を送る」から GitHub の Issue フォーム（`.github/ISSUE_TEMPLATE/feedback.yml`、ラベル「感想」、フォーム名は「感想フォーム」）を開くだけ。名前・メールは聞かない。週1で shared-workflows `routines/game-feedback.md` が読んで直す。
 - 応援は Ko-fi（https://ko-fi.com/satouaaaaa）へのただのリンクだけ。今日の3分子・上級を初めて終えて全部★3のときだけ、結果の画面の下に1行（共有フォルダ kofi/app-guide.md）。遊ぶのは無料のまま、有料版は置かない。
 - 外へ通信しない。外から読むのは Google Fonts の文字だけ（CSP の `connect-src 'self'` を広げない）。記録は遊ぶ人のブラウザ（localStorage）だけ。
-- 見やすさの設定（`<!-- a11y:begin -->`〜`<!-- a11y:end -->`）と `transfer.js`・`qa/a11y.mjs`・`qa/transfer-check.mjs` は shared-workflows の template の写し。ここでは直さず、ひな形を直して写し直す。原子は色だけでなく字（C・N・O・Cl）でも分かり、手が多すぎる原子は！の印と読み上げの文で知らせる。
+- 見やすさの設定（`<!-- a11y:begin -->`〜`<!-- a11y:end -->`）と `transfer.js`（data-keys は自分の記録のキー `bunshi-v1` だけ）・`qa/a11y.mjs`・`qa/transfer-check.mjs` は shared-workflows の template の写し。ここでは直さず、ひな形を直して写し直す。原子は色だけでなく字（C・N・O・Cl）でも分かり、手が多すぎる原子は！の印と読み上げの文で知らせる。
 - 同じ日はどの端末でも同じ問題にする：乱数は `sort` の比較の中で引かない（QA が見る）。少し遅れて動く処理（setTimeout）は、画面が替わっていたら何もしない。一行の式の途中にコメント `//` を足さない（2026-11-05 作っている途中に画面が真っ白になった。QA が見る）。
 - 押せる所は高さ44px以上、原子のボタンは幅320pxでも44px以上で盤の中（QA が見る）。機能を足す・直すたびに `qa/run.mjs` に検査を足す。乱数で組む部分は何年分も作って確かめる（shared-workflows `incidents/2026-10-31-roppo-empty-village.md`）。
 - PWA（`manifest.webmanifest`・`sw.js`・`icon-*.png`）：画面のファイルを足したら `sw.js` の `SHELL` にも足し、中身を大きく変えたら `CACHE` の版を上げる。アイコンは `node tools/make-icons.cjs`、SNS 用の絵 `og.png` は `node tools/make-og.cjs`（今日の分子を入れない）。

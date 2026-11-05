@@ -96,6 +96,8 @@ const HANDS = { C: 4, N: 3, O: 2, Cl: 1 }; // chem.js とは別に書く（高�
   const rep = [];
   for (const [slot, pool] of [[0, P.a], [1, P.b], [2, P.c]]) for (let c = 0; c < 6; c++) { const got = seenA.slice(c * pool.length, (c + 1) * pool.length).map((x) => x[slot]); if (got.length === pool.length && new Set(got).size !== pool.length) rep.push(`${slot}:${c}`); }
   check("今日の3分子は一重・二重/三重・大きな分子から1つずつ、上級の2分子は今日と重ならない（3年分・毎回同じ）", bad.length === 0, bad.slice(0, 5).join(" / "));
+  { const g = {}, hb = []; for (let d = 0; d < 1095; d++) for (const [x, c] of X.hardDay(M, d)) (g[c] = g[c] || []).push(x); for (const [c, l] of Object.entries(g)) if (new Set(l).size !== l.length) hb.push(c);
+    check("上級も1周するまで同じ分子は出ない（3年分。今日と重なって飛ばした分子は後に回す）", hb.length === 0 && Object.keys(g).length > 30, hb.join(",")); }
   check("1周するまで同じ分子は出ない（それぞれの段で6周分）", rep.length === 0, rep.join(" / "));
   const code = readFileSync(path.join(root, "chem.js"), "utf8") + html.replace(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/, "");
   check("Math.random() は練習ととことんの並びだけ（今日・上級は日付の種）", (code.match(/Math\.random\(\)/g) || []).length === 2 && !/Math\.random/.test(readFileSync(path.join(root, "chem.js"), "utf8")));
@@ -285,8 +287,18 @@ try {
     check("時計が戻っても、保存の時刻 t は前より大きくなる", await p.evaluate((K) => { const s0 = JSON.parse(localStorage.getItem(K)); const far = Date.now() + 1e9; localStorage.setItem(K, JSON.stringify(Object.assign({}, s0, { t: far }))); save(() => {}); return JSON.parse(localStorage.getItem(K)).t > far; }, KEY));
     await p.context().close();
   }
+  { // 引き継ぎコードや手で書きかえた記録に、字や範囲外の数が入っていても、画面の HTML に入れず、落ちない
+    const p = await newPage();
+    await p.evaluate((K) => localStorage.setItem(K, JSON.stringify({ v: 1, tut: true, dex: { "エタン": "<img src=x onerror=window.__x=1>", "酢酸": 99, "ないもの": 3 }, ebest: "<b>9</b>", days: { "2026-11-09": { m: ["<i>", 1, 0] }, "<x>": { m: [0] } }, runs: { e: { mode: "e", date: "2026-11-10", list: [0, 1], res: [], life: "<script>" }, d: { mode: "d", date: "2026-11-10", list: ["a"], res: [] }, p: { mode: "p", date: "x", list: [0], res: "bad" } }, apark: { "2026-11-08": { bad: 1 } } })), KEY);
+    await p.reload();
+    const s = await p.evaluate(() => window.__bt.load());
+    check("記録の値をそろえる：星は1〜3の数・知らない分子は消す・自己ベストは数・形のちがう途中経過は捨てる", s.dex["エタン"] === 1 && s.dex["酢酸"] === 3 && !("ないもの" in s.dex) && s.ebest === 0 && s.days["2026-11-09"].m[0] === 0 && !s.days["<x>"] && s.runs.e.life === 0 && s.runs.d === null && s.runs.p === null && s.apark["2026-11-08"] === null, JSON.stringify(s).slice(0, 300));
+    await p.click("#go-dex"); await p.click("#back"); await p.click("#go-e");
+    check("書きかえた記録で分子帳・とことんを開いても、HTML が入らずエラーも出ない", (await p.evaluate(() => !window.__x && !document.querySelector("img[src=x]")) && (await p.locator("#life").count()) === 1));
+    await p.context().close();
+  }
   { // 引き継ぎコード（shared-workflows template/qa/transfer-check.mjs）
-    const sample = { [KEY]: JSON.stringify({ v: 1, tut: true, days: { "2026-11-09": { m: [0, 1, 0] } }, hdays: {}, pdays: {}, dex: { "エタン": 3, "酢酸": 2 }, runs: {}, kofi: {}, ach: {}, apark: {}, ebest: 7, t: 1 }), "a11y-v1": JSON.stringify({ read: true }) };
+    const sample = { [KEY]: JSON.stringify({ v: 1, tut: true, days: { "2026-11-09": { m: [0, 1, 0] } }, hdays: {}, pdays: {}, dex: { "エタン": 3, "酢酸": 2 }, runs: {}, kofi: {}, ach: {}, apark: {}, ebest: 7, t: 1 }) };
     await checkTransfer({ browser, url, game: "bunshi-tsukuri", sample, check, open: async (page) => { await page.evaluate(() => { const d = document.getElementById("howto"); if (d.open) d.close(); }); } });
   }
 } catch (e) {
