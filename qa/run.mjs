@@ -8,6 +8,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { checkTransfer } from "./transfer-check.mjs";
+import { checkSwStall } from "./sw-check.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const url = pathToFileURL(path.join(root, "index.html")).href;
@@ -108,6 +109,7 @@ const HANDS = { C: 4, N: 3, O: 2, Cl: 1 }; // chem.js とは別に書く（高�
 // 3. PWA・ファイル
 {
   const sw = readFileSync(path.join(root, "sw.js"), "utf8"), shell = JSON.parse((sw.match(/SHELL = (\[[^\]]+\])/) || [])[1].replace(/'/g, '"'));
+  { const st = await checkSwStall(sw); check("PWA：本文の途中で通信が止まっても4秒で保存したものを返す・ふつうはネットの返事", st.ok, JSON.stringify(st)); }
   const srcs = [...html.matchAll(/<script[^>]*\bsrc="([^"]+)"/g)].map((m) => "./" + m[1]);
   check("sw.js の SHELL に画面の script が全部入っている", srcs.every((s) => shell.includes(s)), srcs.filter((s) => !shell.includes(s)).join(","));
   check("SHELL のファイルが全部ある", shell.every((f) => f === "./" || existsSync(path.join(root, f))));
