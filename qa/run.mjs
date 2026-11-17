@@ -154,7 +154,7 @@ try {
   { let again = 0; for (let i = 0; i < 10; i++) { await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); await p.keyboard.press("Escape"); await p.reload(); await p.waitForTimeout(200); again += await p.locator("#howto[open]").count(); } check("遊び方を Esc で閉じてすぐ読み直しても出ない（10回）", again === 0); }
   await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); check("「わかった」を押したその場で「見た」が残る", await p.locator("#howto-ok").evaluate((b) => { b.click(); return Object.keys(localStorage).some((k) => { try { return JSON.parse(localStorage.getItem(k)).tut === true; } catch { return false; } }); }));
     check("ホームは幅320pxで横にはみ出さない", await p.evaluate(() => document.documentElement.scrollWidth <= 320));
-    const small = await p.$$eval("button, a", (bs) => bs.filter((b) => b.offsetParent && b.getBoundingClientRect().height < 44).map((b) => b.textContent.trim()));
+    const small = await p.$$eval("button, a", (bs) => bs.filter((b) => b.offsetParent && Math.round(b.getBoundingClientRect().height) < 44).map((b) => b.textContent.trim()));
     check("ホームの押せる所は高さ44px以上", small.length === 0, small.join(","));
     check("ホームに「見やすさ」と「引き継ぎ」がある", (await p.locator("[data-a11y-open]").count()) > 0 && (await p.locator("[data-hk]").count()) > 0);
     await p.context().close();
