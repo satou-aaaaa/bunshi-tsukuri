@@ -113,9 +113,8 @@ dialog a{color:var(--accent);min-height:44px;display:inline-flex;align-items:cen
 .hands{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:0 0 12px}
 .hands span{display:inline-flex;align-items:center;gap:4px;font-size:14px}
 .hands i{font-style:normal;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px}
-.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;z-index:9;box-shadow:0 6px 20px #0005;max-width:calc(100% - 48px);text-align:center}
+.toast{pointer-events:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;z-index:9;box-shadow:0 6px 20px #0005;max-width:calc(100% - 48px);text-align:center}
 .hint{background:var(--panel);border:1px solid var(--accent);border-radius:12px;padding:10px 12px;font-size:14px;text-align:center;margin:0}
-.life{font-size:18px;letter-spacing:2px;white-space:nowrap}.life .off{opacity:.25}
 .big{font-family:var(--f-disp);font-size:34px;text-align:center;margin:8px 0 0}
 .ach-new{background:#fff4e5;color:#5a3d00;border-radius:10px;padding:8px 10px;font-size:14px;font-weight:700;margin:0;text-align:center}
 .achs{display:flex;flex-direction:column;gap:8px}
@@ -333,8 +332,7 @@ const prevDay = (k) => new Date(Date.parse(k) - 864e5).toISOString().slice(0, 10
 // 今日の3分子・上級の2分子は、日本時間の日付（始めた日からの日数）で決まる。だれでも同じ
 const pick = (k, hard) => (hard ? X.hard(MOLS, dayNo(k) - 1) : X.daily(MOLS, dayNo(k) - 1));
 
-// とことん：一重 → 二重 → 三重 → 大きな分子の順に全部（段の中の並びは毎回ちがう）。2周目は手がかり・H の表示なし。まちがい・ヒント1回で🎫1枚、🎫が無いときにまちがえると終わり
-const ELIFE = 3;
+// とことん：一重 → 二重 → 三重 → 大きな分子の順に全部（段の中の並びは毎回ちがう）。2周目は手がかり・H の表示なし。まちがえてもヒントを使っても続き、「ここで降りる」で終わる（好きなだけ遊べるように、回数で縛らない。2026-11-06）
 function endlessList() { const lap = () => { const out = []; for (const st of [1, 2, 3, 4]) { const pool = MOLS.map((_, i) => i).filter((i) => MOLS[i].st === st); for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; } out.push(...pool); } return out; }; return [...lap(), ...lap()]; }
 const blindAt = (run, i) => run.mode === "h" || (run.mode === "e" && i >= MOLS.length); // 上級ととことんの2周目は、手がかりと H の数を出さない
 const fresh = () => ({ v: 1, days: {}, hdays: {}, pdays: {}, dex: {}, runs: {}, tut: false, kofi: {}, ach: {}, apark: {}, ebest: 0 }); // pdays: あとから遊んだ日の結果（連続・今日の記録には数えない）。ach: 結果の画面で知らせ終えた実績。apark: あとから遊ぶ日の途中経過を日付ごとに預ける所
@@ -355,7 +353,6 @@ function tidyRun(r, m) {
   if (!r.list.every((i) => Number.isInteger(i) && i >= 0 && i < MOLS.length) || r.res.length > r.list.length) return null;
   const o = { mode: m, date: r.date, list: r.list.slice(), res: r.res.map((x) => int(x, 0, 99)) };
   if (typeof r.id === "string") o.id = r.id.slice(0, 80);
-  if (m === "e") o.life = int(r.life, 0, ELIFE);
   return o;
 }
 function tidy(s) {
@@ -368,7 +365,8 @@ function tidy(s) {
 }
 function load() { const s = loadRaw(); return tidy(s); }
 function loadRaw() { let a = null, b = null; try { b = JSON.parse(localStorage.getItem(KEY)); } catch (e) {} try { a = mem !== null ? JSON.parse(mem) : null; } catch (e) {} if (a && a.v !== 1) a = null; if (b && b.v !== 1) b = null; if (a) a = tidy(Object.assign(fresh(), a)); if (b) b = tidy(Object.assign(fresh(), b)); /* 読み合わせの前に両方の形をそろえる */ if (!a || !b) return Object.assign(fresh(), a || b || {}); a = Object.assign(fresh(), a); b = Object.assign(fresh(), b); const [n, o] = (a.t || 0) >= (b.t || 0) ? [a, b] : [b, a]; const s = Object.assign(fresh(), n); for (const k in o) { if (k === "runs" || k === "t") continue; const x = o[k], y = n[k]; if (x && y && typeof x === "object" && typeof y === "object") { s[k] = Object.assign({}, x, y); for (const q in x) if (typeof x[q] === "number" && typeof y[q] === "number") s[k][q] = Math.max(x[q], y[q]); } else if (typeof x === "number" && typeof y === "number") s[k] = Math.max(x, y); else if (x === true) s[k] = true; } const ra = a.runs || {}, rb = b.runs || {}, prog = (r) => (r.res ? r.res.length : 0), idOf = (r) => JSON.stringify([r.list || null, r.id || null]); s.runs = Object.assign({}, n.runs); for (const m of new Set([...Object.keys(ra), ...Object.keys(rb)])) { const x = ra[m], y = rb[m]; if (x === undefined || y === undefined) { if (x || y) s.runs[m] = x || y; continue; } if (!x || !y) { const r = x || y; if (!r || bank(s, r) || doneOf(r)) continue; const bd = bookOf(s, r.mode); if (bd && !bd[r.date]) s.runs[m] = r; continue; } if (x.date !== y.date) { const [w, l] = x.date > y.date ? [x, y] : [y, x]; if (!bank(s, l) && m === "a" && !doneOf(l) && !s.apark[l.date]) s.apark[l.date] = l; s.runs[m] = w; } else if (idOf(x) === idOf(y)) { const px = prog(x), py = prog(y); s.runs[m] = px > py ? x : py > px ? y : n.runs[m]; } } return s; }
-function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; } catch (e) { mem = j; } return s; }
+function saveWarn(on) { let b = document.getElementById("savewarn"); const l = document.getElementById("live"), W = "この端末に記録を保存できませんでした。ページを開き直すと、いまの記録が消えます"; if (!on) { if (b) { b.remove(); if (saveWarn.o) saveWarn.o.disconnect(); if (l && l.textContent.includes(W)) l.textContent = l.textContent.replace(W, "").replace(/^[。\s]+|[。\s]+$/g, ""); } return; } if (b) return; b = document.createElement("div"); b.id = "savewarn"; b.setAttribute("role", "status"); b.textContent = W; b.style.cssText = "position:sticky;top:0;z-index:9999;padding:8px 12px;background:#fff3cd;color:#000;font-size:15px;line-height:1.5;text-align:center;pointer-events:none;border-bottom:2px solid #8a6d00"; (document.body || document.documentElement).prepend(b); if (l) { l.textContent = W; if (window.MutationObserver) { saveWarn.o = new MutationObserver(() => { if (document.getElementById("savewarn") && l.textContent && !l.textContent.includes(W)) l.textContent += "。" + W; }); saveWarn.o.observe(l, { childList: true, characterData: true, subtree: true }); } } } // 帯は画面のいちばん上に場所を取り（ボタンに重ならない）、#live でも読み上げる。ほかの知らせで #live が書き換わっても、保存できないあいだは警告を後ろに付け直す。保存できたら帯と #live の警告を消す（黙って記録が消えないように・古い警告を読み上げないように）
+function save(fn) { const s = load(); fn(s); s.t = Math.max(Date.now(), (s.t || 0) + 1); const j = JSON.stringify(s); try { localStorage.setItem(KEY, j); mem = null; saveWarn(false); } catch (e) { mem = j; saveWarn(true); } return s; }
 function streak(days) { let k = todayKey(), n = 0; if (!days[k]) k = prevDay(k); while (days[k]) { n++; k = prevDay(k); } return n; }
 const starsOf = (m) => (m === 0 ? 3 : m <= 2 ? 2 : 1);
 const starStr = (s) => `<span class="stars" role="img" aria-label="星${s}つ">${"★".repeat(s)}<span class="off" aria-hidden="true">${"☆".repeat(3 - s)}</span></span>`;
@@ -449,7 +447,7 @@ function startRun(mode, only) {
   if (mode === "a" && !(load().runs.a && load().runs.a.date === k) && !missed(load()).includes(k)) return calendar(); // 7日より前・遊んだ日・未来の日は始めない
   save((s) => {
     const r = s.runs[mode];
-    if (mode === "e") { if (r && !doneOf(r)) return; s.runs.e = { mode, date: k, list: endlessList(), res: [], life: ELIFE, id: "e" + Date.now().toString(36) + "-" + performance.now().toFixed(3) }; return; } // とことん：途中なら続きから
+    if (mode === "e") { if (r && !doneOf(r)) return; s.runs.e = { mode, date: k, list: endlessList(), res: [], id: "e" + Date.now().toString(36) + "-" + performance.now().toFixed(3) }; return; } // とことん：途中なら続きから
     if (r && r.date === k && mode !== "p") return;
     if (mode === "a" && (s.days[k] || s.pdays[k])) return;
     if (mode === "a") { // 別の日の途中経過は日付ごとに預け、預けてあった日なら続きから
@@ -485,16 +483,16 @@ function play() {
   const label = run.mode === "d" ? "今日の3分子" : run.mode === "h" ? "上級" : run.mode === "a" ? `あとから ${md(run.date)}` : run.mode === "e" ? `とことん${blind ? "・手がかりなし" : ""}` : "練習";
   app.innerHTML = `
     <header><button class="icon" id="back" aria-label="もどる">←</button>
-      ${run.mode === "e" ? `<span class="life" id="life" aria-label="🎫 のこり ${run.life}">${lifeStr(run.life)}</span><span style="font-size:13px;color:var(--muted)">${label} ${i + 1}つ目${s.ebest ? `（ベスト ${s.ebest}）` : ""}</span></header>` : `${run.list.length > 1 ? `<div class="dots">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>` : ""}
+      ${run.mode === "e" ? `<span style="font-size:13px;color:var(--muted)">${label} ${i + 1}つ目${s.ebest ? `（ベスト ${s.ebest}）` : ""}</span></header>` : `${run.list.length > 1 ? `<div class="dots">${run.list.map((_, j) => `<i class="${j < i ? "done" : j === i ? "on" : ""}"></i>`).join("")}</div>` : ""}
       <span style="font-size:13px;color:var(--muted)">${label} ${i + 1}/${run.list.length}</span></header>`}
     <div class="mname" data-a11y-say><b id="mn">${esc(C.n)}</b><span class="f" aria-label="化学式 ${C.f}">${F(C)}</span></div>
     ${blind ? `<p class="clue">手がかりなし：名前と化学式から作ります</p>` : `<p class="clue" data-a11y-say>手がかり：${esc(C.c)}</p>`}
     <div class="board" id="board"><svg viewBox="0 0 1000 ${L.H}" id="svg" aria-hidden="true"><g id="bonds"></g></svg><div id="atoms"></div></div>
     <div class="meter" id="meter"><b id="hnum"></b><span id="msg" role="status" aria-live="polite"></span></div>
-    <div class="row">${run.mode === "h" ? "" : `<button class="sub" id="hint">ヒント${run.mode === "e" ? "（🎫1）" : ""}</button>`}<button class="sub" id="reset">やり直す</button></div>
+    <div class="row">${run.mode === "h" ? "" : `<button class="sub" id="hint">ヒント</button>`}<button class="sub" id="reset">やり直す</button></div>
     <button class="main" id="check">たしかめる</button>
     <div id="after" aria-live="polite"></div>
-    ${run.mode === "e" ? `<p class="note">まちがい・ヒント1回で🎫を1枚使います。🎫が無いときにまちがえると終わりです。</p><button class="sub" id="quit" style="width:100%">ここで降りる（${i}分子で終える）</button>` : ""}
+    ${run.mode === "e" ? `<p class="note">まちがえても、ヒントを使っても続きます。やめたいときは「ここで降りる」で終えられます。</p><button class="sub" id="quit" style="width:100%">ここで降りる（${i}分子で終える）</button>` : ""}
     ${!s.tut || (Object.keys(s.dex).length === 0 && i === 0) ? `<p class="hint">2つの原子を順に押すと結合。同じ2つをもう一度押すと二重・三重になります。</p>` : ""}`;
   $("back").onclick = home;
   if ($("hint")) $("hint").onclick = hint;
@@ -506,14 +504,7 @@ function play() {
   paint();
   window.scrollTo(0, 0);
 }
-const lifeStr = (n) => "🎫".repeat(Math.max(0, n)) + `<span class="off">${"🎫".repeat(Math.max(0, ELIFE - n))}</span>`;
-const lifeOf = () => { const r = load().runs.e; return r ? r.life || 0 : 0; };
 const sameAt = (r) => r && at && r.date === at.date && r.id === at.id && r.res.length === at.i && r.list[at.i] === at.c; // 保存した進み具合が、この画面と同じ分子か
-function useTicket() {
-  let got = false; save((s) => { const r = s.runs.e; if (!sameAt(r)) return; if ((r.life || 0) > 0) { r.life--; got = true; } else got = "out"; });
-  const l = $("life"), n = lifeOf(); if (l) { l.innerHTML = lifeStr(n); l.setAttribute("aria-label", "🎫 のこり " + n); }
-  return got;
-}
 const ORD = ["", "一重", "二重", "三重"];
 function tap(j) {
   if (finished) return;
@@ -553,11 +544,10 @@ function paint() {
   $("meter").classList.toggle("ok", ok);
   $("check").disabled = !ok || finished;
   $("reset").disabled = !bonds.size || finished;
-  if ($("hint")) $("hint").disabled = finished || (MODE === "e" && lifeOf() <= 0);
+  if ($("hint")) $("hint").disabled = finished;
 }
 function hint() {
   if (finished || MODE === "h") return;
-  if (MODE === "e") { const t = useTicket(); if (t !== true) return paint(); }
   const mv = X.hintMove(graph(), target());
   if (!mv) return;
   const [i, j, o] = mv, k = X.key(i, j);
@@ -571,7 +561,6 @@ function submit() {
   if (!sameAt(load().runs[MODE])) { toast("別の画面で先に進んでいます"); return play(); }
   const g = graph();
   if (X.same(g, target())) return complete();
-  if (MODE === "e") { const t = useTicket(); if (t === false) { toast("別の画面で先に進んでいます"); return play(); } if (t === "out") { finished = true; buzz(80); return finish("out"); } }
   miss++; buzz(40);
   const other = MOLS.find((m) => m !== C && X.same(g, { a: m.a, b: m.b }));
   $("after").innerHTML = `<p class="say" role="status">✕ ${other ? `それは「${esc(other.n)}」。同じ原子で別の形の分子です（${esc(other.t)}）。` : "手の数は合っていますが、別の形です。"}${blind ? "" : `手がかり：${esc(C.c)}`}</p>`;
@@ -590,10 +579,10 @@ function complete() {
   if ($("quit")) $("quit").textContent = `ここで降りる（${r ? r.res.length : at.i}分子で終える）`;
   setTimeout(() => { if (finished && $("next")) $("next").scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 50);
 }
-function finish(why) {
+function finish() {
   const s = load(), run = s.runs[MODE];
   if (!run) return home();
-  if (run.mode === "e") return endFinish(run, why);
+  if (run.mode === "e") return endFinish(run);
   let first = false;
   save((s2) => {
     first = bank(s2, run);
@@ -604,7 +593,7 @@ function finish(why) {
 }
 const molList = (list, res) => `<div class="mols">${list.map((ci, j) => `<div><b>${esc(MOLS[ci].n)} <span class="f">${F(MOLS[ci])}</span></b>${starStr(starsOf(res[j]))}<small>${esc(MOLS[ci].t)}</small></div>`).join("")}</div>`;
 // とことんの終わり：作った分子の数を自己ベストと比べる（今日の記録・連続・シェア・Ko-fi には数えない）
-function endFinish(run, why) {
+function endFinish(run) {
   const n = run.res.length; let prev = 0;
   save((s2) => { prev = s2.ebest || 0; s2.ebest = Math.max(prev, n); const c = s2.runs.e; if (c && c.id === run.id) s2.runs.e = null; });
   const s = load(), best = n > prev && n > 0, all = n >= run.list.length;
@@ -612,7 +601,7 @@ function endFinish(run, why) {
   if (fresh1.length) save((s2) => { for (const a of fresh1) s2.ach[a.id] = 1; });
   app.innerHTML = `
     <header><button class="icon" id="back" aria-label="ホームへ">←</button><h1>分子づくり<small>とことん</small></h1><span></span></header>
-    ${why === "out" ? `<p class="note" id="eout">🎫が無いときにまちがえたので、ここまで</p>` : all ? `<p class="note" id="eout">全部の分子を手がかりなしまで作りました</p>` : ""}
+    ${all ? `<p class="note" id="eout">全部の分子を手がかりなしまで作りました</p>` : ""}
     <p class="big" id="eres">${n}分子 作った</p>
     <p class="note" id="ebest">${best ? "🎉 自己ベスト更新！" : `自己ベスト ${s.ebest}${s.ebest >= n ? `（あと${s.ebest - n + 1}で更新）` : ""}`}</p>
     ${fresh1.length ? `<p class="ach-new">🏅 実績：${fresh1.length > 2 ? `${fresh1[0].name} ほか${fresh1.length - 1}つ` : fresh1.map((a) => a.name).join("・")}</p>` : ""}

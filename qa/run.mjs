@@ -244,15 +244,15 @@ try {
     check("分子帳のまだの分子を押すと、その分子だけ練習できる", (await p.evaluate(() => window.__bt.mode())) === "p" && !!(await p.evaluate(() => window.__bt.state().C)));
     await p.context().close();
   }
-  { // とことん：まちがいで🎫を使い、🎫が無いときにまちがえると終わり。自己ベストが残る
+  { // とことん：何回まちがえても終わらず、ヒントも押せる。「ここで降りる」で終わり、自己ベストが残る。何回でも始められる（チケットで縛らない。2026-11-06）
     const p = await newPage();
     await p.click("#go-e");
     const list = await p.evaluate(() => window.__bt.load().runs.e.list.map((i) => window.__bt.MOLS[i].st));
     check("とことんは一重→二重→三重→大きな分子の順で全部、2周目は手がかりなし", list.length === (await p.evaluate(() => window.__bt.MOLS.length)) * 2 && list.slice(0, list.length / 2).every((s, i, a) => i === 0 || a[i - 1] <= s));
     await solve(p); await p.click("#next"); await solve(p); await p.click("#next");
-    // 3つ目で、手の数はそろうが答えでない形を作る（作れない分子は飛ばす）
+    // 手の数はそろうが答えでない形を5回作る（作れない分子は飛ばす）
     let outs = 0;
-    for (let t = 0; t < 20 && outs < 4; t++) {
+    for (let t = 0; t < 30 && outs < 5; t++) {
       const wrong = await p.evaluate(() => { const g = window.__bt, st = g.state(), X = g.X; const pos = {}; st.L.perm.forEach((t, j) => (pos[t] = j)); for (const m of g.MOLS) { if (m === st.C || m.f !== st.C.f || X.same(m, st.C)) continue; const map = X.bestMap({ a: st.L.a, b: [] }, m); if (!map) continue; const inv = {}; map.forEach((t, j) => (inv[t] = j)); return m.b.map(([i, j, o]) => [inv[i], inv[j], o]); } return null; });
       if (!wrong) { await solve(p); await p.click("#next"); continue; }
       await p.evaluate((w) => { const g = window.__bt; for (const [i, j, o] of w) for (let k = 0; k < o; k++) { g.tap(i); g.tap(j); } g.submit(); }, wrong);
@@ -260,8 +260,15 @@ try {
       if (await p.locator("#eres").count()) break;
       await p.click("#reset");
     }
-    check("とことん：🎫3枚を使い切ったあとのまちがいで終わる", (await p.locator("#eout").count()) === 1 && outs === 4, `まちがい${outs}回`);
-    check("とことんの自己ベストが残る", (await p.evaluate(() => window.__bt.load().ebest)) >= 2);
+    check("とことん：5回まちがえても終わらず、ヒントも押せる・🎫を出さない", outs === 5 && (await p.locator("#eres").count()) === 0 && (await p.locator("#hint:not([disabled])").count()) === 1 && !(await p.content()).includes("🎫"), `まちがい${outs}回`);
+    await solve(p);
+    const done = await p.evaluate(() => window.__bt.load().runs.e.res.length), label = await p.textContent("#quit");
+    await p.click("#quit");
+    check("とことんで完成した直後（次へを押す前）に「ここで降りる」を押すと結果の画面になり、その分子も数に入る", (await p.locator("#eres").count()) === 1 && (await p.textContent("#eres")).includes(`${done}分子`) && label.includes(`${done}分子で終える`) && !(await p.evaluate(() => window.__bt.load().runs.e)), `${done}・${label}`);
+    check("とことんの自己ベストが残る", (await p.evaluate(() => window.__bt.load().ebest)) === done);
+    let again = 0;
+    for (let k = 0; k < 3; k++) { await p.click("#go-e"); if (await p.locator("#check").count()) again++; await p.click("#quit"); }
+    check("とことんは何回でも始められる（降りてすぐ3回続けて始められる）", again === 3 && (await p.locator("#eres").count()) === 1, again);
     await p.context().close();
   }
   { // あとから：取りこぼした日を遊ぶと pdays に入り、連続の日には入らない
@@ -298,9 +305,9 @@ try {
     await p.evaluate((K) => localStorage.setItem(K, JSON.stringify({ v: 1, tut: true, dex: { "エタン": "<img src=x onerror=window.__x=1>", "酢酸": 99, "ないもの": 3 }, ebest: "<b>9</b>", days: { "2026-11-09": { m: ["<i>", 1, 0] }, "<x>": { m: [0] } }, runs: { e: { mode: "e", date: "2026-11-10", list: [0, 1], res: [], life: "<script>" }, d: { mode: "d", date: "2026-11-10", list: ["a"], res: [] }, p: { mode: "p", date: "x", list: [0], res: "bad" } }, apark: { "2026-11-08": { bad: 1 } } })), KEY);
     await p.reload();
     const s = await p.evaluate(() => window.__bt.load());
-    check("記録の値をそろえる：星は1〜3の数・知らない分子は消す・自己ベストは数・形のちがう途中経過は捨てる", s.dex["エタン"] === 1 && s.dex["酢酸"] === 3 && !("ないもの" in s.dex) && s.ebest === 0 && s.days["2026-11-09"].m[0] === 0 && !s.days["<x>"] && s.runs.e.life === 0 && s.runs.d === null && s.runs.p === null && s.apark["2026-11-08"] === null, JSON.stringify(s).slice(0, 300));
+    check("記録の値をそろえる：星は1〜3の数・知らない分子は消す・自己ベストは数・形のちがう途中経過は捨てる", s.dex["エタン"] === 1 && s.dex["酢酸"] === 3 && !("ないもの" in s.dex) && s.ebest === 0 && s.days["2026-11-09"].m[0] === 0 && !s.days["<x>"] && s.runs.e && !("life" in s.runs.e) && s.runs.d === null && s.runs.p === null && s.apark["2026-11-08"] === null, JSON.stringify(s).slice(0, 300));
     await p.click("#go-dex"); await p.click("#back"); await p.click("#go-e");
-    check("書きかえた記録で分子帳・とことんを開いても、HTML が入らずエラーも出ない", (await p.evaluate(() => !window.__x && !document.querySelector("img[src=x]")) && (await p.locator("#life").count()) === 1));
+    check("書きかえた記録で分子帳・とことんを開いても、HTML が入らずエラーも出ない", (await p.evaluate(() => !window.__x && !document.querySelector("img[src=x]")) && (await p.locator("#quit").count()) === 1));
     await p.context().close();
   }
   { // ありえない日付の記録は取り込まない・始めた日より前は今日と上級を始めない（2026-11-06 CodeRabbit）
@@ -326,6 +333,27 @@ try {
 } catch (e) {
   check("QA の操作が最後まで完了する", false, e.message.split("\n")[0]);
 } finally {
+  try { // 保存できないとき：帯 #savewarn で知らせ、2秒たっても残し、保存できるようになったら消す（黙っていると開き直したとき記録が消える。shared-workflows incidents/2026-11-07-save-failure-silent.md）
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    await c.addInitScript(() => { window.__origSetItem = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("QuotaExceededError"); }; });
+    const q = await c.newPage(); await q.goto(url); await q.waitForTimeout(300);
+    if (!(await q.locator("#howto[open]").count())) await q.click("#f-how");
+    await q.click("#howto-ok"); await q.waitForTimeout(100);
+    const n1 = await q.locator("#savewarn").count(); await q.waitForTimeout(2000); const n2 = await q.locator("#savewarn").count();
+    await q.evaluate(() => { Storage.prototype.setItem = window.__origSetItem; });
+    await q.click("#f-how"); await q.click("#howto-ok"); await q.waitForTimeout(100);
+    const n3 = await q.locator("#savewarn").count();
+    check("保存できないときは帯（#savewarn）を1つ出し、2秒たっても残る。保存できるようになると消える", n1 === 1 && n2 === 1 && n3 === 0, [n1, n2, n3].join(","));
+    await c.close();
+  } catch (e) { check("保存できないときは帯（#savewarn）を1つ出し、2秒たっても残る。保存できるようになると消える", false, e.message.split("\n")[0]); }
+  try { // 知らせ（.toast）が出ているあいだも、その下のボタンを押せる（pointer-events:none。2026-11-17 全ゲームの点検）
+    const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
+    const q = await c.newPage(); await q.goto(url); await q.waitForTimeout(300);
+    await q.evaluate(() => { const d = document.getElementById("howto"); if (d && d.open) d.close(); toast("知らせの検査"); });
+    const t = await q.evaluate(() => { const e = document.querySelector(".toast"); if (!e) return "知らせが出ない"; const r = e.getBoundingClientRect(), hit = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return [getComputedStyle(e).pointerEvents, hit && (hit === e || e.contains(hit)) ? "知らせが受ける" : "下が受ける"].join(","); });
+    check("知らせ（.toast）が出ているあいだも、その下を押せる（pointer-events が none）", t === "none,下が受ける", t);
+    await c.close();
+  } catch (e) { check("知らせ（.toast）が出ているあいだも、その下を押せる（pointer-events が none）", false, e.message.split("\n")[0]); }
   if (browser) await browser.close();
 }
 check("画面のエラーが無い", errors.length === 0, errors.slice(0, 3).join(" | "));
