@@ -148,7 +148,7 @@ try {
 
   { // はじめて開く：遊び方が出る。ホームの見た目
     const p = await newPage(320, false);
-    check("はじめて開くと、遊び方の窓でなく吹き出しが出る", await p.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach")));
+    check("はじめて開くと、遊び方の窓でなく吹き出しが出る", await p.evaluate(() => !document.getElementById("howto").open && !!document.querySelector("#core-coach:not([hidden])")));
     await p.keyboard.press("Escape"); await p.waitForTimeout(100); check("遊び方を Esc で閉じられる", await p.locator("#howto[open]").count() === 0);
   await p.reload(); await p.waitForTimeout(200); check("遊び方を Esc で閉じても、開き直したとき出ない", await p.locator("#howto[open]").count() === 0);
   await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); await firstClose(p); await p.reload(); await p.waitForTimeout(200); check("遊び方を「わかった」で閉じてすぐ読み直しても出ない", await p.locator("#howto[open]").count() === 0);
