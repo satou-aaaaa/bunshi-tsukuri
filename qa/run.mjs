@@ -14,6 +14,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const url = pathToFileURL(path.join(root, "index.html")).href;
 const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail: String(detail).slice(0, 400) });
+const firstClose = async (q) => { if (await q.locator("#howto[open]").count()) await q.click("#howto-ok"); if (await q.locator("#core-coach").count()) { await q.evaluate(() => Core.coach.leave()); await q.waitForTimeout(100); } }; // はじめての練習の吹き出しをやめてホームへ（sync-template の migrateFirstQa が足した）
 const req = createRequire(import.meta.url);
 globalThis.window = globalThis;
 const M = req(path.join(root, "data.js"));
@@ -147,12 +148,12 @@ try {
 
   { // はじめて開く：遊び方が出る。ホームの見た目
     const p = await newPage(320, false);
-    check("はじめて開くと遊び方が出る", await p.evaluate(() => document.getElementById("howto").open));
+    check("はじめて開くと、遊び方の窓でなく吹き出しが出る", await p.evaluate(() => !document.getElementById("howto").open && !!document.getElementById("core-coach")));
     await p.keyboard.press("Escape"); await p.waitForTimeout(100); check("遊び方を Esc で閉じられる", await p.locator("#howto[open]").count() === 0);
   await p.reload(); await p.waitForTimeout(200); check("遊び方を Esc で閉じても、開き直したとき出ない", await p.locator("#howto[open]").count() === 0);
-  await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); await p.click("#howto-ok"); await p.reload(); await p.waitForTimeout(200); check("遊び方を「わかった」で閉じてすぐ読み直しても出ない", await p.locator("#howto[open]").count() === 0);
+  await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); await firstClose(p); await p.reload(); await p.waitForTimeout(200); check("遊び方を「わかった」で閉じてすぐ読み直しても出ない", await p.locator("#howto[open]").count() === 0);
   { let again = 0; for (let i = 0; i < 10; i++) { await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); await p.keyboard.press("Escape"); await p.reload(); await p.waitForTimeout(200); again += await p.locator("#howto[open]").count(); } check("遊び方を Esc で閉じてすぐ読み直しても出ない（10回）", again === 0); }
-  await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); check("「わかった」を押したその場で「見た」が残る", await p.locator("#howto-ok").evaluate((b) => { b.click(); return Object.keys(localStorage).some((k) => { try { return JSON.parse(localStorage.getItem(k)).tut === true; } catch { return false; } }); }));
+  await p.evaluate(() => localStorage.clear()); await p.reload(); await p.waitForTimeout(200); check("はじめての練習が始まったその場で「見た」が残る", await p.evaluate(() => { return Object.keys(localStorage).some((k) => { try { return JSON.parse(localStorage.getItem(k)).tut === true; } catch { return false; } }); })); await firstClose(p);
     check("ホームは幅320pxで横にはみ出さない", await p.evaluate(() => document.documentElement.scrollWidth <= 320));
     const small = await p.$$eval("button, a", (bs) => bs.filter((b) => b.offsetParent && Math.round(b.getBoundingClientRect().height) < 44).map((b) => b.textContent.trim()));
     check("ホームの押せる所は高さ44px以上", small.length === 0, small.join(","));
@@ -328,7 +329,7 @@ try {
   }
   { // 引き継ぎコード（shared-workflows template/qa/transfer-check.mjs）
     const sample = { [KEY]: JSON.stringify({ v: 1, tut: true, days: { "2026-11-09": { m: [0, 1, 0] } }, hdays: {}, pdays: {}, dex: { "エタン": 3, "酢酸": 2 }, runs: {}, kofi: {}, ach: {}, apark: {}, ebest: 7, t: 1 }) };
-    await checkTransfer({ browser, url, game: "bunshi-tsukuri", sample, check, open: async (page) => { await page.evaluate(() => { const d = document.getElementById("howto"); if (d.open) d.close(); }); } });
+    await checkTransfer({ browser, url, game: "bunshi-tsukuri", sample, check, open: async (page) => { await page.evaluate(() => { const d = document.getElementById("howto"); if (d.open) d.close(); if (window.Core && Core.coach && Core.coach.active()) Core.coach.leave(); }); } });
   }
 } catch (e) {
   check("QA の操作が最後まで完了する", false, e.message.split("\n")[0]);
@@ -337,11 +338,11 @@ try {
     const c = await browser.newContext({ viewport: { width: 390, height: 844 } });
     await c.addInitScript(() => { window.__origSetItem = Storage.prototype.setItem; Storage.prototype.setItem = function () { throw new Error("QuotaExceededError"); }; });
     const q = await c.newPage(); await q.goto(url); await q.waitForTimeout(300);
-    if (!(await q.locator("#howto[open]").count())) await q.click("#f-how");
-    await q.click("#howto-ok"); await q.waitForTimeout(100);
+    if (!(await q.locator("#howto[open]").count())) await firstClose(q).then(() => q.click("#f-how"));
+    await firstClose(q); await q.waitForTimeout(100);
     const n1 = await q.locator("#savewarn").count(); await q.waitForTimeout(2000); const n2 = await q.locator("#savewarn").count();
     await q.evaluate(() => { Storage.prototype.setItem = window.__origSetItem; });
-    await q.click("#f-how"); await q.click("#howto-ok"); await q.waitForTimeout(100);
+    await firstClose(q).then(() => q.click("#f-how")); await firstClose(q); await q.waitForTimeout(100);
     const n3 = await q.locator("#savewarn").count();
     check("保存できないときは帯（#savewarn）を1つ出し、2秒たっても残る。保存できるようになると消える", n1 === 1 && n2 === 1 && n3 === 0, [n1, n2, n3].join(","));
     await c.close();
