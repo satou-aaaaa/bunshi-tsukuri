@@ -20,6 +20,8 @@ globalThis.window = globalThis;
 const M = req(path.join(root, "data.js"));
 const X = req(path.join(root, "chem.js"));
 const html = readFileSync(path.join(root, "index.html"), "utf8");
+// ひな形の写し（<!-- 名前:begin〜end -->）はゲームの言葉ではないので外し、Core.kofi・Core.KOFI は写す前の形にもどして見る（shared-workflows の sync-template が足した）
+const gameOwn = (t) => t.replace(/<!-- ([a-z0-9-]+):begin[\s\S]*?<!-- \1:end -->/g, "").split("${Core.KOFI}").join("https://ko-fi.com/satouaaaaa").replace(/Core\.kofi\(("(?:[^"\\]|\\.)*"), ("(?:[^"\\]|\\.)*")\)/g, (m, a, b) => "`<p class=\"note kofi\">" + JSON.parse(a) + "、<a href=\"https://ko-fi.com/satouaaaaa\" target=\"_blank\" rel=\"noopener\">Ko-fi でコーヒー1杯の応援</a>をもらえると、" + JSON.parse(b) + "の励みになります（任意・遊ぶのはずっと無料）。</p>`");
 const KEY = "bunshi-v1";
 const HANDS = { C: 4, N: 3, O: 2, Cl: 1 }; // chem.js とは別に書く（高校化学の手の数）
 
@@ -101,7 +103,7 @@ const HANDS = { C: 4, N: 3, O: 2, Cl: 1 }; // chem.js とは別に書く（高�
   { const g = {}, hb = []; for (let d = 0; d < 1095; d++) for (const [x, c] of X.hardDay(M, d)) (g[c] = g[c] || []).push(x); for (const [c, l] of Object.entries(g)) if (new Set(l).size !== l.length) hb.push(c);
     check("上級も1周するまで同じ分子は出ない（3年分。今日と重なって飛ばした分子は後に回す）", hb.length === 0 && Object.keys(g).length > 30, hb.join(",")); }
   check("1周するまで同じ分子は出ない（それぞれの段で6周分）", rep.length === 0, rep.join(" / "));
-  const code = readFileSync(path.join(root, "chem.js"), "utf8") + html.replace(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/, "");
+  const code = readFileSync(path.join(root, "chem.js"), "utf8") + gameOwn(html);
   check("Math.random() は練習ととことんの並びだけ（今日・上級は日付の種）", (code.match(/Math\.random\(\)/g) || []).length === 2 && !/Math\.random/.test(readFileSync(path.join(root, "chem.js"), "utf8")));
   check("乱数を sort の比較の中で引いていない（引く回数がブラウザで変わる）", !/sort\(\s*\(\)\s*=>/.test(code) && !/sort\([^)]*(R\(\)|Math\.random)/.test(code));
   check("一行の式の途中に // のコメントを置いていない（行の残りが消える）", !html.split("\n").some((l) => /;\s*\/\/[^\n]*\}\s*$/.test(l)));
